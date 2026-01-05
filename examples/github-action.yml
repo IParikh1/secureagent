@@ -1,0 +1,161 @@
+# Example GitHub Action for using SecureAgent in your CI/CD pipeline
+# Copy this file to .github/workflows/security-scan.yml in your repository
+
+name: Security Scan
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run daily at midnight UTC
+    - cron: '0 0 * * *'
+
+jobs:
+  secureagent-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install SecureAgent
+        run: pip install secureagent
+
+      # Basic scan - scans entire repository
+      - name: Run security scan
+        run: |
+          secureagent scan . \
+            --format sarif \
+            --output security-results.sarif \
+            --min-severity medium
+
+      # Upload results to GitHub Code Scanning
+      - name: Upload SARIF results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: security-results.sarif
+        if: always()
+
+      # Generate JSON report for artifacts
+      - name: Generate detailed report
+        run: |
+          secureagent scan . \
+            --format json \
+            --output security-report.json
+
+      - name: Upload scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.json
+
+  # MCP Configuration scan (if you use MCP)
+  mcp-scan:
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('**/claude_desktop_config.json', '**/.mcp/**') != '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install SecureAgent
+        run: pip install secureagent
+
+      - name: Scan MCP configurations
+        run: |
+          secureagent mcp scan . \
+            --format console \
+            --validate
+
+  # Cloud infrastructure scan (for Terraform)
+  terraform-scan:
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('**/*.tf') != '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install SecureAgent
+        run: pip install "secureagent[iac]"
+
+      - name: Scan Terraform files
+        run: |
+          secureagent iac scan . \
+            --type terraform \
+            --format sarif \
+            --output terraform-results.sarif
+
+      - name: Upload Terraform SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: terraform-results.sarif
+          category: terraform
+        if: always()
+
+  # PR comment with findings summary (for PRs only)
+  pr-comment:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: secureagent-scan
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download scan report
+        uses: actions/download-artifact@v4
+        with:
+          name: security-report
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('security-report.json', 'utf8'));
+
+            const summary = report.summary;
+            const findings = report.findings || [];
+
+            let comment = `## 🔒 Security Scan Results\n\n`;
+            comment += `| Severity | Count |\n|----------|-------|\n`;
+            comment += `| Critical | ${summary.by_severity?.CRITICAL || 0} |\n`;
+            comment += `| High | ${summary.by_severity?.HIGH || 0} |\n`;
+            comment += `| Medium | ${summary.by_severity?.MEDIUM || 0} |\n`;
+            comment += `| Low | ${summary.by_severity?.LOW || 0} |\n\n`;
+            comment += `**Total Findings:** ${summary.total_findings}\n\n`;
+
+            if (findings.length > 0) {
+              comment += `### Top Issues\n\n`;
+              findings.slice(0, 5).forEach(f => {
+                comment += `- **[${f.severity}]** ${f.title}\n`;
+              });
+            }
+
+            comment += `\n---\n*Scanned by SecureAgent*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  secureagent:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: secureagent:latest
+    container_name: secureagent
+    volumes:
+      - ./config:/app/config:ro
+      - ./workspace:/workspace:ro
+      - ./output:/app/output
+    environment:
+      - SECUREAGENT_CONFIG_DIR=/app/config
+      - SECUREAGENT_OUTPUT_DIR=/app/output
+    command: ["scan", "/workspace", "--format", "json", "--output", "/app/output/scan-results.json"]
+
+  secureagent-full:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.full
+    image: secureagent:full
+    container_name: secureagent-full
+    volumes:
+      - ./config:/app/config:ro
+      - ./workspace:/workspace:ro
+      - ./output:/app/output
+      - ./models:/app/models:ro
+    environment:
+      - SECUREAGENT_CONFIG_DIR=/app/config
+      - SECUREAGENT_OUTPUT_DIR=/app/output
+      - SECUREAGENT_MODEL_DIR=/app/models
+      # AWS credentials (if needed)
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_DEFAULT_REGION
+      # GitHub token (if needed)
+      - GITHUB_TOKEN
+      # Slack webhook (if needed)
+      - SLACK_WEBHOOK_URL
+    command: ["--help"]
+
+  # Development service with live reload
+  secureagent-dev:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dev
+    image: secureagent:dev
+    container_name: secureagent-dev
+    volumes:
+      - ../src:/app/src:ro
+      - ./workspace:/workspace
+      - ./output:/app/output
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+    command: ["--help"]
+    profiles:
+      - dev
+
+volumes:
+  output:
+
+networks:
+  default:
+    name: secureagent-network

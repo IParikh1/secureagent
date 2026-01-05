@@ -1,0 +1,55 @@
+# SecureAgent - Full Installation with all optional dependencies
+# Use this for complete functionality including ML, cloud scanning, and integrations
+
+FROM python:3.11-slim as builder
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
+
+RUN pip install --no-cache-dir poetry && \
+    poetry config virtualenvs.create false && \
+    poetry build -f wheel
+
+FROM python:3.11-slim as runtime
+
+LABEL maintainer="SecureAgent Team"
+LABEL description="AI & Cloud Security Platform - Full Installation"
+LABEL version="1.0.0"
+
+WORKDIR /app
+
+# Install system dependencies for ML and cloud
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -u 1000 secureagent
+
+COPY --from=builder /app/dist/*.whl /tmp/
+
+# Install with all extras
+RUN pip install --no-cache-dir "/tmp/*.whl[full]" && \
+    rm /tmp/*.whl
+
+# Copy pre-trained models if available
+COPY --chown=secureagent:secureagent models/ /app/models/ 2>/dev/null || true
+
+USER secureagent
+
+ENV PYTHONUNBUFFERED=1
+ENV SECUREAGENT_CONFIG_DIR=/app/config
+ENV SECUREAGENT_MODEL_DIR=/app/models
+
+ENTRYPOINT ["secureagent"]
+CMD ["--help"]
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD secureagent --version || exit 1

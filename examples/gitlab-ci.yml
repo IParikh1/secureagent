@@ -1,0 +1,140 @@
+# Example GitLab CI configuration for SecureAgent
+# Copy this file to .gitlab-ci.yml in your repository
+
+stages:
+  - security
+  - report
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  SECUREAGENT_OUTPUT_DIR: "$CI_PROJECT_DIR/security-reports"
+
+cache:
+  paths:
+    - .cache/pip/
+
+# Main security scan job
+security-scan:
+  stage: security
+  image: python:3.11-slim
+  before_script:
+    - pip install secureagent
+    - mkdir -p $SECUREAGENT_OUTPUT_DIR
+  script:
+    - secureagent scan . --format json --output $SECUREAGENT_OUTPUT_DIR/scan-results.json --min-severity low
+    - secureagent scan . --format sarif --output $SECUREAGENT_OUTPUT_DIR/gl-sast-report.json
+  artifacts:
+    paths:
+      - $SECUREAGENT_OUTPUT_DIR/
+    reports:
+      sast: $SECUREAGENT_OUTPUT_DIR/gl-sast-report.json
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+# MCP-specific scan
+mcp-scan:
+  stage: security
+  image: python:3.11-slim
+  before_script:
+    - pip install secureagent
+  script:
+    - |
+      if find . -name "claude_desktop_config.json" -o -name "mcp.json" | grep -q .; then
+        secureagent mcp scan . --format console --validate
+      else
+        echo "No MCP configurations found, skipping"
+      fi
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - "**/*claude*config*.json"
+        - "**/.mcp/**"
+        - "**/mcp*.json"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Terraform scan
+terraform-scan:
+  stage: security
+  image: python:3.11-slim
+  before_script:
+    - pip install "secureagent[iac]"
+    - mkdir -p $SECUREAGENT_OUTPUT_DIR
+  script:
+    - secureagent iac scan . --type terraform --format json --output $SECUREAGENT_OUTPUT_DIR/terraform-results.json
+  artifacts:
+    paths:
+      - $SECUREAGENT_OUTPUT_DIR/terraform-results.json
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - "**/*.tf"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - "**/*.tf"
+
+# AI Agent scan (LangChain, OpenAI, etc.)
+ai-agent-scan:
+  stage: security
+  image: python:3.11-slim
+  before_script:
+    - pip install "secureagent[langchain,openai]"
+    - mkdir -p $SECUREAGENT_OUTPUT_DIR
+  script:
+    - secureagent scan . --scanners langchain,openai --format json --output $SECUREAGENT_OUTPUT_DIR/ai-agent-results.json
+  artifacts:
+    paths:
+      - $SECUREAGENT_OUTPUT_DIR/ai-agent-results.json
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - "**/*.py"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Compliance report generation
+compliance-report:
+  stage: report
+  image: python:3.11-slim
+  needs:
+    - security-scan
+  before_script:
+    - pip install "secureagent[reports]"
+  script:
+    - secureagent compliance report owasp_llm --format html --output $SECUREAGENT_OUTPUT_DIR/compliance-report.html
+    - secureagent compliance gaps --format json --output $SECUREAGENT_OUTPUT_DIR/compliance-gaps.json
+  artifacts:
+    paths:
+      - $SECUREAGENT_OUTPUT_DIR/compliance-report.html
+      - $SECUREAGENT_OUTPUT_DIR/compliance-gaps.json
+    expire_in: 1 month
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+# Security gate - fail pipeline if critical issues found
+security-gate:
+  stage: report
+  image: python:3.11-slim
+  needs:
+    - security-scan
+  script:
+    - pip install jq
+    - |
+      CRITICAL=$(cat $SECUREAGENT_OUTPUT_DIR/scan-results.json | python3 -c "import sys, json; d=json.load(sys.stdin); print(d.get('summary', {}).get('by_severity', {}).get('CRITICAL', 0))")
+      HIGH=$(cat $SECUREAGENT_OUTPUT_DIR/scan-results.json | python3 -c "import sys, json; d=json.load(sys.stdin); print(d.get('summary', {}).get('by_severity', {}).get('HIGH', 0))")
+      if [ "$CRITICAL" -gt 0 ]; then
+        echo "Found $CRITICAL critical issues - failing pipeline"
+        exit 1
+      fi
+      if [ "$HIGH" -gt 5 ]; then
+        echo "Found $HIGH high severity issues (threshold: 5) - failing pipeline"
+        exit 1
+      fi
+      echo "Security gate passed: $CRITICAL critical, $HIGH high severity issues"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
