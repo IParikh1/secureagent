@@ -92,6 +92,12 @@ black = "^23.12.0"
 ruff = "^0.1.8"
 mypy = "^1.7.0"
 moto = "^4.0.0"
+isort = "^5.13.0"
+pre-commit = "^3.6.0"
+types-PyYAML = "^6.0.0"
+types-requests = "^2.31.0"
+twine = "^4.0.0"
+build = "^1.0.0"
 
 [tool.poetry.scripts]
 secureagent = "secureagent.cli.app:app"
@@ -120,3 +126,24 @@ disallow_untyped_defs = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+
+[tool.isort]
+profile = "black"
+line_length = 100
+known_first_party = ["secureagent"]
+skip_gitignore = true
+
+[tool.coverage.run]
+source = ["src/secureagent"]
+branch = true
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
+show_missing = true

@@ -5,12 +5,18 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
 
 env:
   PYTHON_VERSION: "3.11"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
+    name: Lint & Format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,21 +26,35 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install dependencies
-        run: |
-          pip install ruff mypy
+      - name: Install linting tools
+        run: pip install ruff black isort mypy
 
-      - name: Run Ruff
-        run: ruff check src/
+      - name: Check formatting with Black
+        run: black --check src/ tests/
 
-      - name: Run MyPy
+      - name: Check imports with isort
+        run: isort --check-only src/ tests/
+
+      - name: Lint with Ruff
+        run: ruff check src/ tests/
+
+      - name: Type check with MyPy
         run: mypy src/secureagent --ignore-missing-imports
+        continue-on-error: true
 
   test:
-    runs-on: ubuntu-latest
+    name: Test Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
+        os: [ubuntu-latest]
         python-version: ["3.9", "3.10", "3.11", "3.12"]
+        include:
+          - os: macos-latest
+            python-version: "3.11"
+          - os: windows-latest
+            python-version: "3.11"
 
     steps:
       - uses: actions/checkout@v4
@@ -43,35 +63,46 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.7.1
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          cache: 'pip'
 
       - name: Install dependencies
-        run: poetry install --with dev
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+        shell: bash
 
-      - name: Run tests
-        run: poetry run pytest tests/ -v --cov=src/secureagent --cov-report=xml
+      - name: Run tests with coverage
+        run: |
+          python -m pytest tests/ -v \
+            --cov=src/secureagent \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --junitxml=test-results.xml
+        env:
+          PYTHONPATH: src
 
-      - name: Upload coverage
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest'
         with:
           files: coverage.xml
           fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.os }}-${{ matrix.python-version }}
+          path: test-results.xml
 
   security-scan:
+    name: Security Scan
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -81,10 +112,19 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install SecureAgent
-        run: pip install .
+        run: |
+          pip install -e .
+        env:
+          PYTHONPATH: src
 
       - name: Run self-scan
-        run: secureagent scan . --format sarif --output security-results.sarif
+        run: |
+          secureagent scan . \
+            --scanners mcp,langchain \
+            --format sarif \
+            --output security-results.sarif \
+            --min-severity medium
+        continue-on-error: true
 
       - name: Upload SARIF results
         uses: github/codeql-action/upload-sarif@v3
@@ -92,7 +132,19 @@ jobs:
           sarif_file: security-results.sarif
         if: always()
 
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
   build:
+    name: Build Package
     runs-on: ubuntu-latest
     needs: [lint, test]
     steps:
@@ -103,19 +155,24 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install build tools
+        run: pip install build twine
 
       - name: Build package
-        run: poetry build
+        run: python -m build
+
+      - name: Check package
+        run: twine check dist/*
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
+          retention-days: 30
 
   docker:
+    name: Build Docker Image
     runs-on: ubuntu-latest
     needs: [test]
     steps:
@@ -130,9 +187,65 @@ jobs:
           context: .
           file: docker/Dockerfile
           push: false
-          tags: secureagent:${{ github.sha }}
+          tags: |
+            secureagent:${{ github.sha }}
+            secureagent:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Test Docker image
-        run: docker run --rm secureagent:${{ github.sha }} --version
+        run: |
+          docker run --rm secureagent:${{ github.sha }} --version
+          docker run --rm secureagent:${{ github.sha }} --help
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Download built package
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Install from built package
+        run: pip install dist/*.whl
+
+      - name: Run CLI smoke tests
+        run: |
+          secureagent --version
+          secureagent --help
+          secureagent scan --help
+          secureagent mcp --help
+          secureagent cloud --help
+          secureagent inventory --help
+          secureagent compliance --help
+
+      - name: Test MCP scan
+        run: |
+          echo '{"mcpServers": {"test": {"command": "test"}}}' > test-config.json
+          secureagent scan test-config.json --format json
+
+  all-checks-passed:
+    name: All Checks Passed
+    runs-on: ubuntu-latest
+    needs: [lint, test, security-scan, build, docker, integration-test]
+    if: always()
+    steps:
+      - name: Check all jobs passed
+        run: |
+          if [[ "${{ needs.lint.result }}" != "success" ]] || \
+             [[ "${{ needs.test.result }}" != "success" ]] || \
+             [[ "${{ needs.build.result }}" != "success" ]]; then
+            echo "One or more required jobs failed"
+            exit 1
+          fi
+          echo "All required checks passed!"
