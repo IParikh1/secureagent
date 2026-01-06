@@ -28,7 +28,7 @@ classifiers = [
 python = "^3.9"
 
 # Core dependencies (always installed)
-typer = "^0.9.0"
+typer = ">=0.9.0,<0.12.0"
 rich = "^13.7.0"
 pydantic = "^2.5.0"
 pyyaml = "^6.0.1"

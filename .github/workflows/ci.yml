@@ -197,6 +197,7 @@ jobs:
           context: .
           file: docker/Dockerfile
           push: false
+          load: true
           tags: |
             secureagent:${{ github.sha }}
             secureagent:latest
