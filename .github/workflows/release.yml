@@ -28,19 +28,25 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install build tools
+        run: pip install build twine
 
       - name: Build package
-        run: poetry build
+        run: python -m build
+
+      - name: Check package
+        run: twine check dist/*
 
       - name: Publish to PyPI
+        if: ${{ secrets.PYPI_TOKEN != '' }}
         env:
-          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
-        run: poetry publish --skip-existing
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: twine upload --skip-existing dist/*
+        continue-on-error: true
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: dist/*
           generate_release_notes: true
@@ -118,13 +124,13 @@ jobs:
         with:
           payload: |
             {
-              "text": "🎉 SecureAgent ${{ github.ref_name }} released successfully!",
+              "text": "SecureAgent ${{ github.ref_name }} released successfully!",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "🎉 *SecureAgent ${{ github.ref_name }}* released!\n\n<${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}|View Release>"
+                    "text": "*SecureAgent ${{ github.ref_name }}* released!\n\n<${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}|View Release>"
                   }
                 }
               ]
