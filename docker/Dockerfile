@@ -41,8 +41,9 @@ RUN useradd -m -u 1000 secureagent
 # Copy wheel from builder
 COPY --from=builder /app/dist/*.whl /tmp/
 
-# Install SecureAgent
-RUN pip install --no-cache-dir /tmp/*.whl && \
+# Install SecureAgent with pinned Typer version to avoid CLI compatibility issues
+RUN pip install --no-cache-dir 'typer>=0.9.0,<0.12.0' && \
+    pip install --no-cache-dir /tmp/*.whl && \
     rm /tmp/*.whl
 
 # Switch to non-root user
