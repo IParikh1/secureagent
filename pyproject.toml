@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "secureagent"
-version = "1.0.0"
+version = "1.0.1"
 description = "Comprehensive AI & Cloud Security Platform - Unified security scanner for AI agents and cloud infrastructure"
 authors = ["SecureAgent Team"]
 license = "Apache-2.0"

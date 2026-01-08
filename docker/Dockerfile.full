@@ -21,7 +21,7 @@ FROM python:3.11-slim as runtime
 
 LABEL maintainer="SecureAgent Team"
 LABEL description="AI & Cloud Security Platform - Full Installation"
-LABEL version="1.0.0"
+LABEL version="1.0.1"
 
 WORKDIR /app
 

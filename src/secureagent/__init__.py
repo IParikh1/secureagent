@@ -5,7 +5,7 @@ A unified security scanner for AI agents (MCP, LangChain, OpenAI, AutoGPT)
 and cloud infrastructure (AWS, Azure, Terraform).
 """
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __author__ = "SecureAgent Team"
 
 from secureagent.core.models.severity import Severity
