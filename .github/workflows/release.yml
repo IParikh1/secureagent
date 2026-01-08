@@ -13,7 +13,6 @@ on:
 env:
   PYTHON_VERSION: "3.11"
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   release:
@@ -81,7 +80,7 @@ jobs:
       packages: write
 
     steps:
-      - name: Determine tag
+      - name: Determine tag and image name
         id: tag
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -89,6 +88,8 @@ jobs:
           else
             echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
           fi
+          # Lowercase the repository name for Docker
+          echo "image_name=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - uses: actions/checkout@v4
         with:
@@ -111,7 +112,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ steps.tag.outputs.image_name }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -138,8 +139,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}-full
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:full
+            ${{ env.REGISTRY }}/${{ steps.tag.outputs.image_name }}:${{ steps.tag.outputs.tag }}-full
+            ${{ env.REGISTRY }}/${{ steps.tag.outputs.image_name }}:full
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
