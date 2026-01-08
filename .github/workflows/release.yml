@@ -43,11 +43,15 @@ jobs:
         run: twine check dist/*
 
       - name: Publish to PyPI
-        if: ${{ secrets.PYPI_TOKEN != '' }}
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: twine upload --skip-existing dist/*
+        run: |
+          if [ -n "$TWINE_PASSWORD" ]; then
+            twine upload --skip-existing dist/*
+          else
+            echo "PYPI_TOKEN not set, skipping PyPI publish"
+          fi
         continue-on-error: true
 
       - name: Create GitHub Release
