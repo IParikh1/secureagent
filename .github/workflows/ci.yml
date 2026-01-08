@@ -119,6 +119,7 @@ jobs:
 
       - name: Install SecureAgent
         run: |
+          pip install 'typer>=0.9.0,<0.12.0'
           pip install -e .
         env:
           PYTHONPATH: src
