@@ -41,8 +41,8 @@ RUN useradd -m -u 1000 secureagent
 # Copy wheel from builder
 COPY --from=builder /app/dist/*.whl /tmp/
 
-# Install SecureAgent with pinned Typer version to avoid CLI compatibility issues
-RUN pip install --no-cache-dir 'typer>=0.9.0,<0.12.0' && \
+# Install SecureAgent with pinned Typer/Click versions to avoid CLI compatibility issues
+RUN pip install --no-cache-dir 'typer>=0.9.0,<0.12.0' 'click>=8.0.0,<8.2.0' && \
     pip install --no-cache-dir /tmp/*.whl && \
     rm /tmp/*.whl
 

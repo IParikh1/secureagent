@@ -119,7 +119,7 @@ jobs:
 
       - name: Install SecureAgent
         run: |
-          pip install 'typer>=0.9.0,<0.12.0'
+          pip install 'typer>=0.9.0,<0.12.0' 'click>=8.0.0,<8.2.0'
           pip install -e .
         env:
           PYTHONPATH: src
@@ -230,7 +230,7 @@ jobs:
 
       - name: Install from built package
         run: |
-          pip install 'typer>=0.9.0,<0.12.0'
+          pip install 'typer>=0.9.0,<0.12.0' 'click>=8.0.0,<8.2.0'
           pip install dist/*.whl
 
       - name: Run CLI smoke tests

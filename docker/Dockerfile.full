@@ -35,8 +35,8 @@ RUN useradd -m -u 1000 secureagent
 
 COPY --from=builder /app/dist/*.whl /tmp/
 
-# Install with all extras, pinning Typer to avoid CLI compatibility issues
-RUN pip install --no-cache-dir 'typer>=0.9.0,<0.12.0' && \
+# Install with all extras, pinning Typer/Click to avoid CLI compatibility issues
+RUN pip install --no-cache-dir 'typer>=0.9.0,<0.12.0' 'click>=8.0.0,<8.2.0' && \
     pip install --no-cache-dir "/tmp/*.whl[full]" && \
     rm /tmp/*.whl
 
