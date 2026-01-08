@@ -37,7 +37,8 @@ COPY --from=builder /app/dist/*.whl /tmp/
 
 # Install with all extras, pinning Typer/Click to avoid CLI compatibility issues
 RUN pip install --no-cache-dir 'typer>=0.9.0,<0.12.0' 'click>=8.0.0,<8.2.0' && \
-    pip install --no-cache-dir "/tmp/*.whl[full]" && \
+    pip install --no-cache-dir /tmp/*.whl && \
+    pip install --no-cache-dir "secureagent[full]" && \
     rm /tmp/*.whl
 
 # Copy pre-trained models if available (skip if models directory doesn't exist)
