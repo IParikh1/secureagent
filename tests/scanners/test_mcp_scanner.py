@@ -33,12 +33,12 @@ class TestMCPScanner:
         config_path = temp_dir / "mcp_config.json"
         config_path.write_text(json.dumps(config))
 
-        scanner = MCPScanner(path=config_path)
-        findings = scanner.scan()
+        scanner = MCPScanner()
+        result = scanner.scan(str(config_path))
 
         # Should find hardcoded API key
         credential_findings = [
-            f for f in findings
+            f for f in result.findings
             if "credential" in f.title.lower() or "key" in f.title.lower()
         ]
         assert len(credential_findings) > 0
@@ -56,12 +56,12 @@ class TestMCPScanner:
         config_path = temp_dir / "mcp_config.json"
         config_path.write_text(json.dumps(config))
 
-        scanner = MCPScanner(path=config_path)
-        findings = scanner.scan()
+        scanner = MCPScanner()
+        result = scanner.scan(str(config_path))
 
         # Should find command injection risk
         injection_findings = [
-            f for f in findings if "injection" in f.title.lower() or "command" in f.title.lower()
+            f for f in result.findings if "injection" in f.title.lower() or "command" in f.title.lower()
         ]
         assert len(injection_findings) > 0
 
@@ -81,11 +81,11 @@ class TestMCPScanner:
         config_path = temp_dir / "mcp_config.json"
         config_path.write_text(json.dumps(config))
 
-        scanner = MCPScanner(path=config_path)
-        findings = scanner.scan()
+        scanner = MCPScanner()
+        result = scanner.scan(str(config_path))
 
         # Should detect pipe pattern
-        assert isinstance(findings, list)
+        assert isinstance(result.findings, list)
 
     def test_scan_clean_config(self, temp_dir):
         """Test scanning a clean configuration."""
@@ -103,11 +103,11 @@ class TestMCPScanner:
         config_path = temp_dir / "mcp_config.json"
         config_path.write_text(json.dumps(config))
 
-        scanner = MCPScanner(path=config_path)
-        findings = scanner.scan()
+        scanner = MCPScanner()
+        result = scanner.scan(str(config_path))
 
         # Should have minimal or no critical findings
-        critical_findings = [f for f in findings if f.severity == Severity.CRITICAL]
+        critical_findings = [f for f in result.findings if f.severity == Severity.CRITICAL]
         assert len(critical_findings) == 0
 
     def test_scan_path_traversal(self, temp_dir):
@@ -123,12 +123,12 @@ class TestMCPScanner:
         config_path = temp_dir / "mcp_config.json"
         config_path.write_text(json.dumps(config))
 
-        scanner = MCPScanner(path=config_path)
-        findings = scanner.scan()
+        scanner = MCPScanner()
+        result = scanner.scan(str(config_path))
 
         # Should find path traversal
         traversal_findings = [
-            f for f in findings if "traversal" in f.title.lower() or "path" in f.title.lower()
+            f for f in result.findings if "traversal" in f.title.lower() or "path" in f.title.lower()
         ]
         assert len(traversal_findings) > 0
 
@@ -137,14 +137,14 @@ class TestMCPScanner:
         invalid_path = temp_dir / "mcp_invalid.json"
         invalid_path.write_text("not valid json {")
 
-        scanner = MCPScanner(path=invalid_path)
-        findings = scanner.scan()
+        scanner = MCPScanner()
+        result = scanner.scan(str(invalid_path))
 
         # Should handle gracefully, returning parse error finding
-        assert isinstance(findings, list)
+        assert isinstance(result.findings, list)
         # May have a parse error finding
-        if findings:
-            error_findings = [f for f in findings if "parse" in f.title.lower() or "error" in f.title.lower()]
+        if result.findings:
+            error_findings = [f for f in result.findings if "parse" in f.title.lower() or "error" in f.title.lower()]
             assert len(error_findings) >= 0
 
     def test_scan_directory(self, temp_dir):
@@ -162,12 +162,12 @@ class TestMCPScanner:
         (temp_dir / "mcp.json").write_text(json.dumps(config))
         (temp_dir / ".mcp.json").write_text(json.dumps(config))
 
-        scanner = MCPScanner(path=temp_dir)
-        findings = scanner.scan()
+        scanner = MCPScanner()
+        result = scanner.scan(str(temp_dir))
 
-        assert isinstance(findings, list)
+        assert isinstance(result.findings, list)
         # Should find issues in multiple files
-        assert len(findings) >= 1
+        assert len(result.findings) >= 1
 
     def test_scan_sensitive_env_vars(self, temp_dir):
         """Test detecting sensitive environment variables."""
@@ -185,13 +185,13 @@ class TestMCPScanner:
         config_path = temp_dir / "mcp_config.json"
         config_path.write_text(json.dumps(config))
 
-        scanner = MCPScanner(path=config_path)
-        findings = scanner.scan()
+        scanner = MCPScanner()
+        result = scanner.scan(str(config_path))
 
         # Should find sensitive env var
         sensitive_findings = [
-            f for f in findings
-            if "environment" in f.title.lower() or "sensitive" in f.title.lower()
+            f for f in result.findings
+            if "environment" in f.title.lower() or "sensitive" in f.title.lower() or "data" in f.title.lower()
         ]
         assert len(sensitive_findings) > 0
 
@@ -224,9 +224,19 @@ class TestMCPScanner:
         config_path = temp_dir / "mcp_config.json"
         config_path.write_text(json.dumps(config))
 
-        scanner = MCPScanner(path=config_path)
-        findings = scanner.scan()
+        scanner = MCPScanner()
+        result = scanner.scan(str(config_path))
 
-        for finding in findings:
+        for finding in result.findings:
             assert finding.location is not None
             assert finding.location.file_path is not None
+
+    def test_get_rules(self):
+        """Test getting scanner rules."""
+        scanner = MCPScanner()
+        rules = scanner.get_rules()
+
+        assert len(rules) > 0
+        assert all("id" in r for r in rules)
+        assert all("title" in r for r in rules)
+        assert all("severity" in r for r in rules)

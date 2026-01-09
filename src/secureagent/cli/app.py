@@ -12,6 +12,9 @@ from secureagent import __version__
 from secureagent.core.config import get_config, load_config
 from secureagent.core.models.severity import Severity
 
+# Import scanners to register them with the registry
+import secureagent.scanners  # noqa: F401
+
 # Create main app
 app = typer.Typer(
     name="secureagent",

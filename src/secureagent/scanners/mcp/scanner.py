@@ -7,12 +7,12 @@ import re
 from pathlib import Path
 from typing import Generator, Optional, List, Dict, Any
 
-from secureagent.core.models.finding import Finding, FindingDomain, Location
+from secureagent.core.models.finding import Finding, FindingDomain, Location, ScanResult
 from secureagent.core.models.severity import Severity
 from secureagent.core.scanner.base import BaseScanner
 from secureagent.core.scanner.registry import register_scanner
 from secureagent.scanners.mcp.models import MCPConfig, MCPServer
-from secureagent.scanners.mcp.rules import get_rule
+from secureagent.scanners.mcp.rules import get_rule, MCP_RULES
 
 
 @register_scanner
@@ -36,35 +36,56 @@ class MCPScanner(BaseScanner):
         "**/*mcp*.json",
     ]
 
-    def discover_targets(self) -> Generator[Path, None, None]:
+    def discover_targets(self, path: Optional[Path] = None) -> Generator[Path, None, None]:
         """Discover MCP configuration files.
+
+        Args:
+            path: Path to search (defaults to self.path)
 
         Yields:
             Paths to MCP configuration files
         """
-        if self.path.is_file():
-            yield self.path
+        search_path = path or self.path
+        if search_path.is_file():
+            yield search_path
             return
 
         for pattern in self.CONFIG_PATTERNS:
-            for config_file in self.path.glob(pattern):
+            for config_file in search_path.glob(pattern):
                 if config_file.is_file():
                     yield config_file
 
-    def scan(self) -> List[Finding]:
+    def scan(self, target: str, **kwargs: Any) -> ScanResult:
         """Execute the MCP security scan.
 
+        Args:
+            target: Path to file/directory to scan
+            **kwargs: Additional scan options
+
         Returns:
-            List of security findings
+            ScanResult containing all findings
         """
         self.findings = []
+        self.path = Path(target)
 
         for config_path in self.discover_targets():
             config = self._parse_config(config_path)
             if config:
                 self._scan_config(config)
 
-        return self.findings
+        return ScanResult(
+            findings=self.findings,
+            scan_path=target,
+            scanner_name=self.name,
+        )
+
+    def get_rules(self) -> List[Dict[str, Any]]:
+        """Get list of MCP security rules.
+
+        Returns:
+            List of rule definitions
+        """
+        return list(MCP_RULES.values())
 
     def _parse_config(self, config_path: Path) -> Optional[MCPConfig]:
         """Parse an MCP configuration file.
