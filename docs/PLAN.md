@@ -4,7 +4,7 @@
 
 **Business Model**: Tiered pricing with capability-based upgrades (Free → Pro → Enterprise)
 
-**Current Version**: v1.0.2 (Released 2026-01-09)
+**Current Version**: v1.1.0 (Released 2026-01-16)
 
 **Overall Progress**: ~99% Complete (Core), 0% Complete (AI-Enhanced Mode)
 
