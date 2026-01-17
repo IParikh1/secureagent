@@ -98,11 +98,12 @@ SecureAgent operates in two distinct modes, allowing users to choose based on th
 | **Phase 11: AI-Enhanced Mode** | 🔲 Not Started | 0% |
 
 ### Key Metrics
-- **Python files**: 57 (core) + ~15 (AI-enhanced, planned)
-- **Lines of code**: 7,500+
-- **Lines of test code**: 1,500+
-- **Tests passing**: 227
-- **Scanners**: 7 (MCP, LangChain, OpenAI, AutoGPT, AWS, Azure, Terraform)
+- **Python files**: 70+ (core) + ~15 (AI-enhanced, planned)
+- **Lines of code**: 10,000+
+- **Lines of test code**: 2,500+
+- **Tests passing**: 308
+- **Scanners**: 9 (MCP, LangChain, OpenAI, AutoGPT, Multi-Agent, RAG, AWS, Azure, Terraform)
+- **Security Rules**: 100+ (AI Agents: 70+, Cloud: 30+)
 - **Compliance frameworks**: 4 (SOC2, NIST, GDPR, OWASP)
 - **Integrations**: 5 (GitHub, GitLab, Slack, Webhooks, SIEM)
 
@@ -113,10 +114,20 @@ SecureAgent operates in two distinct modes, allowing users to choose based on th
 ### Standard Mode (Rule-Based) - SHIPPED
 
 #### 1. AI Agent Security Scanning
-- **MCP Scanner** - MCP server configurations (7 rules)
-- **LangChain Scanner** - LangChain agent vulnerabilities
-- **OpenAI Assistants Scanner** - Function calls, file access, tools
-- **AutoGPT/CrewAI Scanner** - Multi-agent framework security
+- **MCP Scanner** - MCP server configurations (10 rules)
+- **LangChain Scanner** - LangChain agent vulnerabilities (10 rules)
+- **OpenAI Assistants Scanner** - Function calls, file access, tools (10 rules)
+- **AutoGPT/CrewAI Scanner** - Multi-agent framework security (10 rules)
+- **Multi-Agent Security Scanner** - Orchestration, communication, delegation (30 rules)
+  - Orchestration analysis (LangGraph, AutoGen, CrewAI)
+  - Communication channel security
+  - Delegation attack detection
+  - Framework-specific analyzers
+- **RAG Security Scanner** - Vector stores, documents, poisoning (30 rules)
+  - Vector store security (Pinecone, Chroma, Weaviate, Qdrant, Milvus, PGVector, Redis, FAISS)
+  - Document ingestion security
+  - RAG poisoning detection
+- **Jailbreak Detection** - Prompt injection and jailbreak attempt detection
 
 #### 2. AI Inventory & Discovery
 - **Agent Catalog** - Discover and list all AI agents
