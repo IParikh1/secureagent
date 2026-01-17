@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from typing import Generator, Optional, List
 
-from secureagent.core.models.finding import Finding, Location
+from secureagent.core.models.finding import Finding, FindingDomain, Location
 from secureagent.core.models.severity import Severity
 from secureagent.core.scanner.base import BaseScanner
 from secureagent.core.scanner.registry import register_scanner
@@ -311,6 +311,7 @@ class AutoGPTScanner(BaseScanner):
                         title=rule["title"],
                         description=f"Found {desc}. {rule['description']}.",
                         severity=rule["severity"],
+                        domain=FindingDomain.AUTOGPT,
                         location=Location(
                             file_path=config.file_path,
                             line_number=line_num,
@@ -345,6 +346,7 @@ class AutoGPTScanner(BaseScanner):
                             title=rule["title"],
                             description=f"Hierarchical crew without apparent human oversight. {rule['description']}.",
                             severity=rule["severity"],
+                            domain=FindingDomain.AUTOGPT,
                             location=Location(
                                 file_path=config.file_path,
                                 line_number=line_num,
@@ -386,6 +388,7 @@ class AutoGPTScanner(BaseScanner):
                             description=f"Agent '{agent.name}' has tool '{tool.name}' with "
                             f"{', '.join(capabilities)}. {rule['description']}.",
                             severity=rule["severity"],
+                            domain=FindingDomain.AUTOGPT,
                             location=Location(
                                 file_path=config.file_path,
                                 line_number=line_num,
@@ -417,6 +420,7 @@ class AutoGPTScanner(BaseScanner):
                             description=f"{len(delegates)} agents with delegation enabled "
                             f"without apparent message validation. {rule['description']}.",
                             severity=rule["severity"],
+                            domain=FindingDomain.AUTOGPT,
                             location=Location(
                                 file_path=config.file_path,
                                 snippet=f"Agents: {', '.join(a.name for a in delegates)}",
@@ -452,6 +456,7 @@ class AutoGPTScanner(BaseScanner):
                             description=f"Agent '{agent.name}' has memory enabled without limits. "
                             f"{rule['description']}.",
                             severity=rule["severity"],
+                            domain=FindingDomain.AUTOGPT,
                             location=Location(
                                 file_path=config.file_path,
                                 line_number=line_num,
@@ -484,6 +489,7 @@ class AutoGPTScanner(BaseScanner):
                         description=f"Agent '{agent.name}' can delegate tasks without restrictions. "
                         f"{rule['description']}.",
                         severity=rule["severity"],
+                        domain=FindingDomain.AUTOGPT,
                         location=Location(
                             file_path=config.file_path,
                             line_number=line_num,
@@ -521,6 +527,7 @@ class AutoGPTScanner(BaseScanner):
                                 description=f"Agent '{agent.name}' has web access via '{tool.name}' "
                                 f"without URL filtering. {rule['description']}.",
                                 severity=rule["severity"],
+                                domain=FindingDomain.AUTOGPT,
                                 location=Location(
                                     file_path=config.file_path,
                                     line_number=line_num,
@@ -546,6 +553,7 @@ class AutoGPTScanner(BaseScanner):
                     title=rule["title"],
                     description=f"Verbose mode enabled. {rule['description']}.",
                     severity=rule["severity"],
+                    domain=FindingDomain.AUTOGPT,
                     location=Location(
                         file_path=config.file_path,
                         line_number=line_num,
@@ -576,6 +584,7 @@ class AutoGPTScanner(BaseScanner):
                         description=f"Agent '{agent.name}' has no iteration limits set. "
                         f"{rule['description']}.",
                         severity=rule["severity"],
+                        domain=FindingDomain.AUTOGPT,
                         location=Location(
                             file_path=config.file_path,
                             line_number=line_num,

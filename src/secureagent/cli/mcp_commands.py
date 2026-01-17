@@ -70,9 +70,49 @@ def scan_mcp(
             console.print(table)
 
         # Risk scoring
-        if risk_score:
+        if risk_score and result.findings:
+            from secureagent.ml import RiskScorer
+            from rich.panel import Panel
+
             console.print("\n[bold]Risk Analysis[/bold]")
-            console.print("[dim]ML risk scoring would be displayed here[/dim]")
+
+            # Find model path
+            model_locations = [
+                Path(__file__).parent.parent.parent.parent / "models" / "secureagent_risk_v1.pkl",
+                Path(__file__).parent.parent.parent.parent / "models" / "mcp_risk_model_latest.pkl",
+                Path("models") / "secureagent_risk_v1.pkl",
+            ]
+            model_path = next((p for p in model_locations if p.exists()), None)
+
+            if model_path:
+                console.print(f"[dim]Using ML model: {model_path.name}[/dim]")
+                scorer = RiskScorer(model_path=model_path, use_ml=True)
+            else:
+                console.print("[dim]Using heuristic scoring[/dim]")
+                scorer = RiskScorer(use_ml=False)
+
+            assessment = scorer.score_findings(result.findings)
+
+            # Color based on risk
+            risk_score_val = assessment.overall_score
+            if risk_score_val >= 0.7:
+                color = "red"
+            elif risk_score_val >= 0.4:
+                color = "yellow"
+            else:
+                color = "green"
+
+            console.print(Panel(
+                f"[{color} bold]Risk Score: {risk_score_val:.1%}[/{color} bold]\n"
+                f"Level: [{color}]{assessment.risk_level.upper()}[/{color}]\n"
+                f"Confidence: {assessment.confidence:.1%}",
+                title="Overall Risk",
+            ))
+
+            if assessment.recommendations:
+                console.print("\n[bold]Recommendations:[/bold]")
+                for rec in assessment.recommendations[:3]:
+                    console.print(f"  - {rec}")
 
         # Graph analysis
         if graph:
@@ -116,6 +156,7 @@ def fix_mcp(
     output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output file for fixed config"),
     apply: bool = typer.Option(False, "--apply", help="Apply fixes in-place (creates backup)"),
     preview: bool = typer.Option(True, "--preview/--no-preview", help="Preview changes"),
+    option: Optional[int] = typer.Option(None, "--option", help="Fix option index to use (0-based)"),
 ) -> None:
     """Generate and optionally apply fixes for MCP security issues.
 
@@ -123,12 +164,109 @@ def fix_mcp(
         secureagent mcp fix ./mcp.json
         secureagent mcp fix ./mcp.json --output fixed.json
         secureagent mcp fix ./mcp.json --apply
+        secureagent mcp fix ./mcp.json --apply --option 1
     """
+    from rich.panel import Panel
+    from rich.syntax import Syntax
+    from secureagent.core.scanner.registry import scanner_registry
+    from secureagent.remediation import RemediationGenerator, Fixer
+
     console.print(f"\n[bold blue]MCP Auto-Remediation[/bold blue]")
     console.print(f"File: [cyan]{path}[/cyan]\n")
 
-    # Fix logic would go here
-    console.print("[yellow]Fix generation not yet implemented[/yellow]")
+    if not path.exists():
+        console.print(f"[red]File not found: {path}[/red]")
+        raise typer.Exit(1)
+
+    # First, scan for findings
+    scanner = scanner_registry.get("mcp")
+    if not scanner:
+        console.print("[red]MCP scanner not available[/red]")
+        raise typer.Exit(1)
+
+    scanner.initialize()
+    try:
+        result = scanner.scan(str(path))
+    finally:
+        scanner.cleanup()
+
+    if not result.findings:
+        console.print("[green]No security issues found - no fixes needed![/green]")
+        return
+
+    console.print(f"Found [yellow]{len(result.findings)}[/yellow] security issues\n")
+
+    # Generate fixes
+    generator = RemediationGenerator()
+    fixes = generator.generate_fixes(result.findings)
+
+    if not fixes:
+        console.print("[yellow]No automatic fixes available for the found issues[/yellow]")
+        return
+
+    console.print(f"Generated [green]{len(fixes)}[/green] fix suggestions\n")
+
+    # Display fix options
+    for i, fix in enumerate(fixes):
+        console.print(f"[bold cyan]Fix {i + 1}: {fix.rule_id}[/bold cyan]")
+        console.print(f"  File: {fix.file_path}:{fix.line_number or '?'}")
+
+        for j, opt in enumerate(fix.options):
+            marker = "[recommended]" if j == fix.recommended_option else ""
+            console.print(f"\n  [yellow]Option {j}[/yellow] {marker}: {opt.title}")
+            console.print(f"    {opt.description}")
+            if opt.security_impact:
+                console.print(f"    [green]Security:[/green] {opt.security_impact}")
+            if opt.breaking_changes:
+                console.print(f"    [red]Breaking:[/red] {', '.join(opt.breaking_changes)}")
+
+        console.print()
+
+    # Preview or apply
+    if preview and not apply:
+        console.print("[dim]Use --apply to apply fixes (creates backup)[/dim]")
+        console.print("[dim]Use --option N to select a specific fix option[/dim]")
+
+        # Show diff preview
+        fixer = Fixer()
+        for fix in fixes:
+            dry_result = fixer.apply_fix(fix, dry_run=True, option_index=option)
+            if dry_result.diff:
+                console.print(f"\n[bold]Preview for {fix.rule_id}:[/bold]")
+                syntax = Syntax(dry_result.diff, "diff", theme="monokai", line_numbers=False)
+                console.print(syntax)
+
+    if apply:
+        console.print("\n[bold]Applying fixes...[/bold]")
+
+        fixer = Fixer()
+        summary = fixer.apply_fixes(fixes, dry_run=False, option_index=option)
+
+        # Report results
+        console.print(f"\n[bold]Results:[/bold]")
+        console.print(f"  Successful: [green]{summary.successful}[/green]")
+        console.print(f"  Failed: [red]{summary.failed}[/red]")
+        console.print(f"  Manual required: [yellow]{summary.manual_required}[/yellow]")
+        console.print(f"  Skipped: [dim]{summary.skipped}[/dim]")
+
+        # Show details
+        for res in summary.results:
+            if res.status.value == "success":
+                console.print(f"\n[green]✓[/green] {res.rule_id}: {res.message}")
+                if res.backup_path:
+                    console.print(f"  [dim]Backup: {res.backup_path}[/dim]")
+            elif res.status.value == "manual_required":
+                console.print(f"\n[yellow]![/yellow] {res.rule_id}: {res.message}")
+            elif res.status.value == "failed":
+                console.print(f"\n[red]✗[/red] {res.rule_id}: {res.message}")
+
+        if summary.successful > 0:
+            console.print(Panel(
+                f"[green]Applied {summary.successful} fix(es) successfully![/green]\n"
+                f"Backups created in .secureagent/backups/",
+                title="Complete",
+                border_style="green",
+            ))
 
 
 @mcp_app.command("rules")

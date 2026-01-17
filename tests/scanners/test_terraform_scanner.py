@@ -28,7 +28,8 @@ resource "aws_s3_bucket" "public" {
         tf_path.write_text(tf_config)
 
         scanner = TerraformScanner(path=tf_path)
-        findings = scanner.scan()
+        result = scanner.scan()
+        findings = result.findings
 
         # Should find public S3 bucket
         s3_findings = [f for f in findings if "s3" in f.rule_id.lower()]
@@ -52,7 +53,8 @@ resource "aws_security_group" "open_ssh" {
         tf_path.write_text(tf_config)
 
         scanner = TerraformScanner(path=tf_path)
-        findings = scanner.scan()
+        result = scanner.scan()
+        findings = result.findings
 
         # Should find open SSH
         sg_findings = [f for f in findings if "sg" in f.rule_id.lower() or "security" in f.title.lower()]
@@ -76,7 +78,8 @@ resource "aws_security_group" "allow_all" {
         tf_path.write_text(tf_config)
 
         scanner = TerraformScanner(path=tf_path)
-        findings = scanner.scan()
+        result = scanner.scan()
+        findings = result.findings
 
         # Should find critical security group issue
         critical_findings = [f for f in findings if f.severity == Severity.CRITICAL]
@@ -97,7 +100,8 @@ resource "aws_db_instance" "public_db" {
         tf_path.write_text(tf_config)
 
         scanner = TerraformScanner(path=tf_path)
-        findings = scanner.scan()
+        result = scanner.scan()
+        findings = result.findings
 
         # Should find public RDS and unencrypted storage
         rds_findings = [f for f in findings if "rds" in f.rule_id.lower()]
@@ -135,7 +139,8 @@ resource "aws_security_group" "secure" {
         tf_path.write_text(secure_tf)
 
         scanner = TerraformScanner(path=tf_path)
-        findings = scanner.scan()
+        result = scanner.scan()
+        findings = result.findings
 
         # Should have no critical findings
         critical = [f for f in findings if f.severity == Severity.CRITICAL]
@@ -158,7 +163,8 @@ variable "region" {
         (temp_dir / "variables.tf").write_text(vars_tf)
 
         scanner = TerraformScanner(path=temp_dir)
-        findings = scanner.scan()
+        result = scanner.scan()
+        findings = result.findings
 
         assert isinstance(findings, list)
         # Should find S3 issue
@@ -176,7 +182,8 @@ resource "aws_instance" "no_imdsv2" {
         tf_path.write_text(tf_config)
 
         scanner = TerraformScanner(path=tf_path)
-        findings = scanner.scan()
+        result = scanner.scan()
+        findings = result.findings
 
         # Should find IMDSv2 not enforced
         ec2_findings = [f for f in findings if "ec2" in f.rule_id.lower() or "imds" in f.title.lower()]
@@ -199,7 +206,8 @@ resource "aws_instance" "unencrypted" {
         tf_path.write_text(tf_config)
 
         scanner = TerraformScanner(path=tf_path)
-        findings = scanner.scan()
+        result = scanner.scan()
+        findings = result.findings
 
         # Should find unencrypted volume
         encryption_findings = [
@@ -232,7 +240,8 @@ resource "aws_s3_bucket" "test" {
         tf_path.write_text(tf_config)
 
         scanner = TerraformScanner(path=tf_path)
-        findings = scanner.scan()
+        result = scanner.scan()
+        findings = result.findings
 
         for finding in findings:
             assert finding.location is not None
@@ -256,7 +265,8 @@ resource "aws_security_group" "db_exposed" {
         tf_path.write_text(tf_config)
 
         scanner = TerraformScanner(path=tf_path)
-        findings = scanner.scan()
+        result = scanner.scan()
+        findings = result.findings
 
         # Should find exposed database port
         db_findings = [f for f in findings if "mysql" in f.title.lower() or "3306" in str(f)]

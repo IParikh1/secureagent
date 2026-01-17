@@ -1,15 +1,82 @@
 """Risk and data flow analysis CLI commands."""
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
+import json
 
 import typer
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 
+from secureagent.core.models.finding import Finding
+
 analyze_app = typer.Typer(help="Risk & data flow analysis")
 console = Console()
+
+
+def _get_default_model_path() -> Optional[Path]:
+    """Get the default model path."""
+    # Check common locations
+    locations = [
+        Path(__file__).parent.parent.parent.parent / "models" / "secureagent_risk_v1.pkl",
+        Path(__file__).parent.parent.parent.parent / "models" / "mcp_risk_model_latest.pkl",
+        Path.home() / ".secureagent" / "models" / "secureagent_risk_v1.pkl",
+        Path("models") / "secureagent_risk_v1.pkl",
+    ]
+
+    for path in locations:
+        if path.exists():
+            return path
+    return None
+
+
+def _scan_target(target: str) -> List[Finding]:
+    """Scan the target and return findings."""
+    from secureagent.core.scanner.registry import scanner_registry
+
+    target_path = Path(target)
+    findings = []
+
+    if target_path.exists():
+        # Determine scanner based on file type
+        if target_path.suffix in [".json", ""]:
+            # Try MCP scanner
+            scanner = scanner_registry.get("mcp")
+            if scanner:
+                scanner.initialize()
+                try:
+                    result = scanner.scan(str(target_path))
+                    findings.extend(result.findings)
+                finally:
+                    scanner.cleanup()
+
+        if target_path.suffix == ".tf":
+            # Try Terraform scanner
+            scanner = scanner_registry.get("terraform")
+            if scanner:
+                scanner.initialize()
+                try:
+                    result = scanner.scan(str(target_path))
+                    findings.extend(result.findings)
+                finally:
+                    scanner.cleanup()
+
+        # If directory, try all relevant scanners
+        if target_path.is_dir():
+            for scanner_name in ["mcp", "terraform", "langchain"]:
+                scanner = scanner_registry.get(scanner_name)
+                if scanner:
+                    scanner.initialize()
+                    try:
+                        result = scanner.scan(str(target_path))
+                        findings.extend(result.findings)
+                    except Exception:
+                        pass
+                    finally:
+                        scanner.cleanup()
+
+    return findings
 
 
 @analyze_app.command("permissions")
@@ -199,30 +266,67 @@ def analyze_egress(
 def analyze_risk(
     target: str = typer.Argument(..., help="Agent ID or config path"),
     detailed: bool = typer.Option(False, "--detailed", "-d", help="Show detailed breakdown"),
+    model_path: Optional[Path] = typer.Option(None, "--model", "-m", help="Path to ML model file"),
+    no_ml: bool = typer.Option(False, "--no-ml", help="Disable ML scoring, use heuristics only"),
 ) -> None:
     """Calculate ML-based risk score for an agent.
 
     Examples:
         secureagent analyze risk ./mcp.json
         secureagent analyze risk agent-123 --detailed
+        secureagent analyze risk ./config.json --model ./models/custom.pkl
+        secureagent analyze risk ./config.json --no-ml
     """
+    from secureagent.ml import RiskScorer
+
     console.print(f"\n[bold blue]Risk Score Analysis[/bold blue]")
     console.print(f"Target: [cyan]{target}[/cyan]\n")
 
-    # Risk score would be calculated by ML model
-    risk_score = 0.72
-    confidence = 0.95
+    # Scan the target to get findings
+    console.print("[dim]Scanning target for security findings...[/dim]")
+    findings = _scan_target(target)
+
+    if not findings:
+        console.print("[yellow]No security findings detected in target.[/yellow]")
+        console.print(Panel(
+            "[green bold]Risk Score: 0%[/green bold]\n"
+            "Level: [green]LOW[/green]\n"
+            "Confidence: 100%\n\n"
+            "[dim]No security issues found.[/dim]",
+            title="Overall Risk",
+        ))
+        return
+
+    console.print(f"[dim]Found {len(findings)} security findings. Calculating risk score...[/dim]\n")
+
+    # Initialize RiskScorer
+    use_ml = not no_ml
+    actual_model_path = model_path or _get_default_model_path()
+
+    if use_ml and actual_model_path:
+        console.print(f"[dim]Using ML model: {actual_model_path.name}[/dim]")
+        scorer = RiskScorer(model_path=actual_model_path, use_ml=True)
+    else:
+        if use_ml:
+            console.print("[dim]No ML model found, using heuristic scoring[/dim]")
+        else:
+            console.print("[dim]Using heuristic scoring (ML disabled)[/dim]")
+        scorer = RiskScorer(use_ml=False)
+
+    # Calculate risk assessment
+    assessment = scorer.score_findings(findings)
+
+    risk_score = assessment.overall_score
+    confidence = assessment.confidence
+    level = assessment.risk_level.upper()
 
     # Color based on risk
     if risk_score >= 0.7:
         color = "red"
-        level = "HIGH"
     elif risk_score >= 0.4:
         color = "yellow"
-        level = "MEDIUM"
     else:
         color = "green"
-        level = "LOW"
 
     console.print(Panel(
         f"[{color} bold]Risk Score: {risk_score:.1%}[/{color} bold]\n"
@@ -231,25 +335,56 @@ def analyze_risk(
         title="Overall Risk",
     ))
 
+    # Show recommendations
+    if assessment.recommendations:
+        console.print("\n[bold]Recommendations:[/bold]")
+        for rec in assessment.recommendations[:5]:
+            console.print(f"  - {rec}")
+
     if detailed:
-        console.print("\n[bold]Risk Factor Breakdown:[/bold]")
+        # Show individual finding scores
+        console.print("\n[bold]Finding Scores:[/bold]")
 
-        table = Table()
-        table.add_column("Factor", style="cyan")
-        table.add_column("Score")
-        table.add_column("Weight")
-        table.add_column("Contribution")
+        findings_table = Table()
+        findings_table.add_column("Finding", style="cyan")
+        findings_table.add_column("Severity")
+        findings_table.add_column("Risk Score", justify="right")
 
-        factors = [
-            ("Dangerous Tools", 0.85, "15%", "+12.8%"),
-            ("Missing Guardrails", 0.60, "12%", "+7.2%"),
-            ("External Egress", 0.70, "10%", "+7.0%"),
-            ("Sensitive Data Access", 0.50, "10%", "+5.0%"),
-            ("Auth Configuration", 0.30, "8%", "+2.4%"),
-        ]
+        for finding in findings:
+            score = assessment.finding_scores.get(finding.id, 0.0)
+            sev = finding.severity.value if hasattr(finding.severity, 'value') else str(finding.severity)
+            sev_style = {
+                "critical": "red bold",
+                "high": "red",
+                "medium": "yellow",
+                "low": "blue",
+            }.get(sev.lower(), "dim")
 
-        for factor, score, weight, contrib in factors:
             score_color = "red" if score >= 0.7 else "yellow" if score >= 0.4 else "green"
-            table.add_row(factor, f"[{score_color}]{score:.0%}[/{score_color}]", weight, contrib)
+            findings_table.add_row(
+                f"{finding.rule_id}: {finding.title[:40]}",
+                f"[{sev_style}]{sev.upper()}[/{sev_style}]",
+                f"[{score_color}]{score:.1%}[/{score_color}]",
+            )
 
-        console.print(table)
+        console.print(findings_table)
+
+        # Show risk factors
+        if assessment.risk_factors:
+            console.print("\n[bold]Risk Factor Breakdown:[/bold]")
+
+            factors_table = Table()
+            factors_table.add_column("Category", style="cyan")
+            factors_table.add_column("Findings", justify="right")
+            factors_table.add_column("Impact")
+
+            for factor in assessment.risk_factors:
+                impact = factor.get("impact", "low")
+                impact_style = {"high": "red", "medium": "yellow"}.get(impact, "blue")
+                factors_table.add_row(
+                    factor.get("category", "Unknown"),
+                    str(factor.get("finding_count", 0)),
+                    f"[{impact_style}]{impact.upper()}[/{impact_style}]",
+                )
+
+            console.print(factors_table)

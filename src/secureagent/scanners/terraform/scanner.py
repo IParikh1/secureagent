@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any, Union, Generator
 
-from secureagent.core.models.finding import Finding, FindingDomain, Location
+from secureagent.core.models.finding import Finding, FindingDomain, Location, ScanResult
 from secureagent.core.models.severity import Severity
 from secureagent.core.scanner.base import BaseScanner
 from secureagent.core.scanner.registry import register_scanner
@@ -22,9 +22,9 @@ class TerraformScanner(BaseScanner):
     description = "Scans Terraform files for security misconfigurations"
     version = "1.0.0"
 
-    def __init__(self, path=None):
+    def __init__(self, path=None, config=None, **kwargs):
         """Initialize the Terraform scanner."""
-        super().__init__(path)
+        super().__init__(path, config, **kwargs)
         self._hcl2 = None
 
     @property
@@ -51,8 +51,19 @@ class TerraformScanner(BaseScanner):
             if tf_file.is_file():
                 yield tf_file
 
-    def scan(self) -> List[Finding]:
-        """Run Terraform security scan."""
+    def scan(self, target: str = None, **kwargs) -> ScanResult:
+        """Run Terraform security scan.
+
+        Args:
+            target: Optional path to file/directory to scan (overrides self.path)
+            **kwargs: Additional scan options
+
+        Returns:
+            ScanResult with findings
+        """
+        if target:
+            self.path = Path(target)
+
         logger.info("Starting Terraform security scan...")
         self.findings = []
 
@@ -60,7 +71,12 @@ class TerraformScanner(BaseScanner):
             self._scan_file(tf_file)
 
         logger.info(f"Terraform scan complete. Found {len(self.findings)} issues.")
-        return self.findings
+
+        return ScanResult(
+            findings=self.findings,
+            scan_path=str(self.path),
+            scanner_name=self.name,
+        )
 
     def _scan_file(self, file_path: Path) -> None:
         """Scan a single Terraform file."""

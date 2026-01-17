@@ -2,11 +2,82 @@
 
 **Vision**: The first comprehensive security platform for AI agents and cloud infrastructure, providing visibility, risk assessment, and compliance across the entire AI deployment stack.
 
-**Business Model**: Usage-based pricing (Free → Pro → Team → Enterprise)
+**Business Model**: Tiered pricing with capability-based upgrades (Free → Pro → Enterprise)
 
 **Current Version**: v1.0.2 (Released 2026-01-09)
 
-**Overall Progress**: ~99% Complete
+**Overall Progress**: ~99% Complete (Core), 0% Complete (AI-Enhanced Mode)
+
+---
+
+## Dual-Mode Architecture
+
+SecureAgent operates in two distinct modes, allowing users to choose based on their needs:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      SECUREAGENT DUAL-MODE ARCHITECTURE                 │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│  MODE 1: STANDARD (Default)              MODE 2: AI-ENHANCED (Opt-in)  │
+│  ─────────────────────────               ────────────────────────────  │
+│                                                                         │
+│  • Rule-based scanning                   • Everything in Standard, plus │
+│  • Local ML risk scoring                 • LLM-powered semantic analysis│
+│  • Pattern matching                      • Context-aware remediation    │
+│  • No external API calls                 • Attack path reasoning        │
+│  • Works offline/air-gapped              • Threat intelligence          │
+│  • Zero data leaves your machine         • Requires API key or local LLM│
+│                                                                         │
+│  secureagent scan ./config               secureagent scan ./config --ai │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+                            DATA FLOW COMPARISON
+
+    STANDARD MODE                           AI-ENHANCED MODE
+    ─────────────                           ─────────────────
+
+    ┌──────────┐                            ┌──────────┐
+    │  Config  │                            │  Config  │
+    └────┬─────┘                            └────┬─────┘
+         │                                       │
+         ▼                                       ▼
+    ┌──────────┐                            ┌──────────┐
+    │  Rules   │                            │  Rules   │
+    │  Engine  │                            │  Engine  │
+    └────┬─────┘                            └────┬─────┘
+         │                                       │
+         ▼                                       ▼
+    ┌──────────┐                            ┌──────────┐      ┌──────────┐
+    │  Local   │                            │  Local   │ ───► │   LLM    │
+    │  ML      │                            │  ML      │      │  (opt)   │
+    └────┬─────┘                            └────┬─────┘      └────┬─────┘
+         │                                       │                  │
+         ▼                                       └────────┬─────────┘
+    ┌──────────┐                                          ▼
+    │ Findings │                                    ┌──────────┐
+    └──────────┘                                    │ Enhanced │
+                                                    │ Findings │
+         ✓ Offline                                  └──────────┘
+         ✓ No data egress
+         ✓ Fast                                          ✓ Deeper analysis
+                                                         ✓ Fewer false positives
+                                                         ✓ Smart remediation
+```
+
+### Mode Selection Philosophy
+
+| User Need | Recommended Mode | Why |
+|-----------|------------------|-----|
+| Air-gapped environment | Standard | No external calls |
+| Privacy-sensitive configs | Standard | Data never leaves machine |
+| CI/CD pipelines | Standard | Fast, deterministic |
+| Deep security analysis | AI-Enhanced | Semantic understanding |
+| Context-aware fixes | AI-Enhanced | LLM generates tailored fixes |
+| Novel threat detection | AI-Enhanced | LLM identifies new patterns |
 
 ---
 
@@ -24,9 +95,10 @@
 | Phase 8: ML & Graph Analysis | ⚡ Near Complete | 95% |
 | Phase 9: CI/CD, Docker & Compatibility | ✅ Complete | 100% |
 | Phase 10: Testing | ⚡ Near Complete | 90% |
+| **Phase 11: AI-Enhanced Mode** | 🔲 Not Started | 0% |
 
 ### Key Metrics
-- **Python files**: 57
+- **Python files**: 57 (core) + ~15 (AI-enhanced, planned)
 - **Lines of code**: 7,500+
 - **Lines of test code**: 1,500+
 - **Tests passing**: 227
@@ -38,49 +110,202 @@
 
 ## Product Capabilities
 
-### 1. AI Agent Security Scanning
+### Standard Mode (Rule-Based) - SHIPPED
+
+#### 1. AI Agent Security Scanning
 - **MCP Scanner** - MCP server configurations (7 rules)
 - **LangChain Scanner** - LangChain agent vulnerabilities
 - **OpenAI Assistants Scanner** - Function calls, file access, tools
 - **AutoGPT/CrewAI Scanner** - Multi-agent framework security
 
-### 2. AI Inventory & Discovery
+#### 2. AI Inventory & Discovery
 - **Agent Catalog** - Discover and list all AI agents
 - **Model Registry** - Track which LLMs each agent calls
 - **Tool Mapping** - Document all tools/connectors per agent
 - **Data Source Inventory** - Map read/write data sources
 
-### 3. Permission & Risk Analysis
+#### 3. Permission & Risk Analysis
 - **Action Permission Map** - What each agent can execute
 - **ML Risk Scoring** - 93.2% accuracy risk assessment
 - **Privilege Analysis** - Identify over-privileged agents
 - **Blast Radius Estimation** - Impact if agent compromised
 
-### 4. Data Exposure & Flow
+#### 4. Data Exposure & Flow
 - **Prompt Data Flow** - What data enters prompts
 - **Memory Analysis** - Data in agent memory/context
 - **Guardrail Coverage** - Map which guardrails protect what
 - **Egress Path Mapping** - Where data can flow out
 
-### 5. Cloud Security
+#### 5. Cloud Security
 - **AWS Scanner** - S3, IAM, EC2, Lambda (27+ checks)
 - **Azure Scanner** - Storage, KeyVault, Functions
 - **Terraform Scanner** - IaC security (11 checks)
 - **CloudTrail Detection** - Real-time threat monitoring
 
-### 6. Compliance & Reporting
+#### 6. Compliance & Reporting
 - **OWASP LLM Top 10** - Findings mapped to OWASP
 - **OWASP MCP Top 10** - MCP-specific risk mapping
 - **CWE Mapping** - Common Weakness Enumeration
 - **SOC2/PCI-DSS/HIPAA** - Compliance dashboards
 - **Audit-Ready Reports** - PDF/HTML exports
 
-### 7. Integrations
+#### 7. Integrations
 - **GitHub** - Repo scanning, PR comments, issue creation
 - **GitLab** - CI/CD integration
 - **Slack Bot** - Interactive queries and alerts
 - **SARIF Output** - GitHub Code Scanning
 - **Webhooks** - Generic event notifications
+
+---
+
+### AI-Enhanced Mode (LLM-Powered) - PLANNED
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    AI-ENHANCED MODE CAPABILITIES                        │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         FREE TIER (v2.0)                                │
+│                                                                         │
+│  ┌─────────────────────────────┐    ┌─────────────────────────────┐    │
+│  │    SEMANTIC ANALYST         │    │   REMEDIATION GENERATOR     │    │
+│  │                             │    │                             │    │
+│  │  • Intent analysis          │    │  • Context-aware fixes      │    │
+│  │  • False positive reduction │    │  • Multiple fix options     │    │
+│  │  • Novel pattern detection  │    │  • Impact analysis          │    │
+│  │  • Confidence scoring       │    │  • Schema validation        │    │
+│  │                             │    │                             │    │
+│  │  Limit: 100 AI scans/month  │    │  Limit: 100 fixes/month     │    │
+│  └─────────────────────────────┘    └─────────────────────────────┘    │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+                                     │
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         PRO TIER ($39/mo) (v2.5)                        │
+│                                                                         │
+│                    ┌─────────────────────────────┐                      │
+│                    │   ATTACK PATH ANALYZER      │                      │
+│                    │                             │                      │
+│                    │  • Multi-hop chain analysis │                      │
+│                    │  • Blast radius estimation  │                      │
+│                    │  • MITRE ATT&CK mapping     │                      │
+│                    │  • Likelihood scoring       │                      │
+│                    │  • Visual attack graphs     │                      │
+│                    │                             │                      │
+│                    │  Unlimited AI scans         │                      │
+│                    └─────────────────────────────┘                      │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+                                     │
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     ENTERPRISE TIER ($499/mo) (v3.0)                    │
+│                                                                         │
+│  ┌─────────────────────────────┐    ┌─────────────────────────────┐    │
+│  │  THREAT INTEL ENRICHER      │    │   CONTINUOUS MONITOR        │    │
+│  │                             │    │                             │    │
+│  │  • CVE correlation          │    │  • Config drift detection   │    │
+│  │  • Exploit database lookup  │    │  • Runtime monitoring       │    │
+│  │  • Threat actor tracking    │    │  • Anomaly detection        │    │
+│  │  • Emerging threat alerts   │    │  • Compliance tracking      │    │
+│  │                             │    │                             │    │
+│  └─────────────────────────────┘    └─────────────────────────────┘    │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Agent 1: Semantic Vulnerability Analyst (Free Tier)
+
+**Purpose**: Understand *intent* behind MCP configurations, not just pattern-match
+
+| Capability | Description |
+|------------|-------------|
+| Intent Analysis | Understand what a tool *does*, not just what it's *named* |
+| Context Awareness | Evaluate risk based on surrounding configuration |
+| Novel Pattern Detection | Identify new attack vectors not in rule database |
+| Confidence Scoring | Quantify certainty of findings |
+| False Positive Reduction | Filter out benign configurations that trigger rules |
+
+**Specification**:
+- Model: Claude Haiku (default) or local Llama 3
+- Latency: <3s per finding
+- Rate Limit (Free): 100 AI-enhanced scans/month
+
+---
+
+#### Agent 2: Intelligent Remediation Generator (Free Tier)
+
+**Purpose**: Generate context-aware, implementation-ready fixes
+
+| Capability | Description |
+|------------|-------------|
+| Context-Aware Fixes | Match existing code style/patterns |
+| Multiple Options | Security/usability tradeoff alternatives |
+| Dependency Analysis | Ensure fixes don't break functionality |
+| Validation | Verify generated fixes pass schema |
+| Impact Preview | Show what changes before applying |
+
+**Specification**:
+- Model: Claude Haiku or local model
+- Output: 1-3 fix options with impact analysis
+- All fixes validated against JSON schema
+
+---
+
+#### Agent 3: Attack Path Analyzer (Pro Tier)
+
+**Purpose**: Deep analysis of privilege escalation and lateral movement
+
+| Capability | Description |
+|------------|-------------|
+| Multi-Hop Analysis | Trace attack paths across tool chains |
+| Blast Radius Estimation | Worst-case impact assessment |
+| MITRE ATT&CK Mapping | Map to known attack techniques |
+| Likelihood Scoring | Which paths are most exploitable? |
+| Visual Graphs | Mermaid diagrams of attack chains |
+
+**Specification**:
+- Model: Claude Sonnet (complex reasoning required)
+- Output: Attack chains with visualizations
+- Integrates with existing `graph/` module
+
+---
+
+#### Agent 4: Threat Intelligence Enricher (Enterprise Tier)
+
+**Purpose**: Correlate findings with real-world threat data
+
+| Capability | Description |
+|------------|-------------|
+| CVE Correlation | Match findings to known vulnerabilities |
+| Exploit Database | Check for public exploits |
+| Threat Actor Tracking | Identify known adversary techniques |
+| Emerging Threats | Flag newly disclosed attack patterns |
+
+**Specification**:
+- Data Sources: NVD, MITRE ATLAS, GitHub Advisories
+- Update Frequency: Daily sync
+- Requires: Vector DB infrastructure (optional)
+
+---
+
+#### Agent 5: Continuous Security Monitor (Enterprise Tier)
+
+**Purpose**: Real-time security posture monitoring
+
+| Capability | Description |
+|------------|-------------|
+| Config Drift Detection | Alert on changes from secure baseline |
+| Runtime Monitoring | Track actual MCP traffic (via proxy) |
+| Anomaly Detection | Identify unusual patterns |
+| Compliance Tracking | Maintain posture over time |
+
+**Specification**:
+- Deployment: Background daemon/service
+- Alerts: Webhook, email, Slack integrations
+- Requires: All other agents as foundation
 
 ---
 
@@ -91,6 +316,7 @@
 - Pluggable, self-registering scanner modules
 - Lazy-loaded cloud SDKs (optional dependencies)
 - Unified Finding model for all scanner types
+- **AI agents as optional enhancement layer**
 
 ---
 
@@ -110,6 +336,7 @@ secureagent/
 │   │   ├── cloud_commands.py             # Cloud subcommands
 │   │   ├── inventory_commands.py         # Inventory commands
 │   │   ├── compliance_commands.py        # Compliance reports
+│   │   ├── ai_commands.py                # AI-enhanced commands (NEW)
 │   │   └── compat.py                     # Backward compatibility
 │   │
 │   ├── core/                             # Core Framework
@@ -118,7 +345,8 @@ secureagent/
 │   │   │   ├── finding.py                # Unified Finding model
 │   │   │   ├── severity.py               # Severity enum
 │   │   │   ├── agent.py                  # Agent model
-│   │   │   └── data_flow.py              # Data flow models
+│   │   │   ├── data_flow.py              # Data flow models
+│   │   │   └── ai_enhancement.py         # AI enhancement models (NEW)
 │   │   ├── scanner/
 │   │   │   ├── base.py                   # BaseScanner ABC
 │   │   │   └── registry.py               # Scanner plugin registry
@@ -133,7 +361,7 @@ secureagent/
 │   │       ├── slack.py                  # Slack webhooks
 │   │       └── webhook.py                # Generic webhooks
 │   │
-│   ├── scanners/                         # Security Scanners
+│   ├── scanners/                         # Security Scanners (Rule-Based)
 │   │   ├── mcp/                          # MCP configs
 │   │   │   ├── scanner.py
 │   │   │   ├── rules.py
@@ -160,6 +388,46 @@ secureagent/
 │   │   └── terraform/                    # Terraform IaC
 │   │       ├── scanner.py
 │   │       └── checks.py
+│   │
+│   ├── ai_agents/                        # AI-Enhanced Mode (NEW)
+│   │   ├── __init__.py
+│   │   ├── base.py                       # BaseAIAgent ABC
+│   │   ├── registry.py                   # AI agent registry
+│   │   ├── provider/                     # LLM Provider Abstraction
+│   │   │   ├── __init__.py
+│   │   │   ├── base.py                   # BaseLLMProvider ABC
+│   │   │   ├── claude.py                 # Anthropic Claude
+│   │   │   ├── openai.py                 # OpenAI GPT
+│   │   │   └── local.py                  # Local models (Ollama/Llama)
+│   │   ├── semantic_analyst/             # Agent 1: Semantic Analysis
+│   │   │   ├── __init__.py
+│   │   │   ├── agent.py                  # Main agent logic
+│   │   │   ├── prompts.py                # Prompt templates
+│   │   │   └── schemas.py                # Output schemas
+│   │   ├── remediation_generator/        # Agent 2: Fix Generation
+│   │   │   ├── __init__.py
+│   │   │   ├── agent.py
+│   │   │   ├── prompts.py
+│   │   │   ├── validator.py              # Fix validation
+│   │   │   └── schemas.py
+│   │   ├── attack_path_analyzer/         # Agent 3: Attack Paths (Pro)
+│   │   │   ├── __init__.py
+│   │   │   ├── agent.py
+│   │   │   ├── prompts.py
+│   │   │   └── visualizer.py             # Mermaid generation
+│   │   ├── threat_intel_enricher/        # Agent 4: Threat Intel (Enterprise)
+│   │   │   ├── __init__.py
+│   │   │   ├── agent.py
+│   │   │   ├── sources/                  # Data source connectors
+│   │   │   │   ├── nvd.py
+│   │   │   │   ├── mitre.py
+│   │   │   │   └── github_advisories.py
+│   │   │   └── cache.py                  # Threat data cache
+│   │   └── continuous_monitor/           # Agent 5: Monitoring (Enterprise)
+│   │       ├── __init__.py
+│   │       ├── agent.py
+│   │       ├── drift_detector.py
+│   │       └── daemon.py                 # Background service
 │   │
 │   ├── inventory/                        # AI Inventory & Discovery
 │   │   ├── __init__.py
@@ -207,7 +475,7 @@ secureagent/
 │   │   ├── __init__.py
 │   │   └── cloudtrail.py                 # CloudTrail threat detection
 │   │
-│   ├── ml/                               # Machine Learning
+│   ├── ml/                               # Machine Learning (Local)
 │   │   ├── __init__.py
 │   │   ├── models.py                     # Ensemble model
 │   │   ├── features/
@@ -227,7 +495,7 @@ secureagent/
 │   │
 │   └── remediation/                      # Auto-Remediation
 │       ├── __init__.py
-│       ├── generator.py                  # Fix generation
+│       ├── generator.py                  # Rule-based fix generation
 │       └── fixer.py                      # Apply fixes
 │
 ├── models/                               # Pre-trained ML models
@@ -241,7 +509,8 @@ secureagent/
 │   ├── analysis/
 │   ├── compliance/
 │   ├── integrations/
-│   └── ml/
+│   ├── ml/
+│   └── ai_agents/                        # AI agent tests (NEW)
 │
 ├── docker/
 │   ├── Dockerfile
@@ -251,7 +520,8 @@ secureagent/
 │   ├── getting-started.md
 │   ├── cli-reference.md
 │   ├── integrations.md
-│   └── compliance-frameworks.md
+│   ├── compliance-frameworks.md
+│   └── ai-enhanced-mode.md               # AI mode documentation (NEW)
 │
 ├── examples/
 │   ├── github-action.yml
@@ -283,6 +553,47 @@ class Finding(BaseModel):
     risk_score: Optional[float]       # ML-calculated (0.0-1.0)
     compliance_mappings: List[str]    # ["SOC2-CC6.1", "PCI-DSS-6.5.1"]
     metadata: Dict[str, Any]
+
+    # AI-Enhanced fields (populated when --ai flag used)
+    ai_analysis: Optional[AIAnalysis]           # Semantic analysis results
+    ai_remediation: Optional[AIRemediation]     # Generated fixes
+    ai_confidence: Optional[float]              # AI confidence score
+```
+
+### AI Enhancement Models (NEW)
+```python
+class AIAnalysis(BaseModel):
+    """Results from Semantic Analyst agent"""
+    intent: str                       # What the config is trying to do
+    risk_rationale: str               # Why this is/isn't risky
+    false_positive_likelihood: float  # 0.0-1.0
+    novel_patterns: List[str]         # Patterns not in rule database
+    context_factors: List[str]        # Surrounding config that affects risk
+    confidence: float                 # 0.0-1.0
+
+class AIRemediation(BaseModel):
+    """Results from Remediation Generator agent"""
+    options: List[RemediationOption]  # 1-3 fix options
+    recommended: int                  # Index of recommended option
+    validation_passed: bool           # Schema validation result
+
+class RemediationOption(BaseModel):
+    title: str                        # e.g., "Conservative Fix"
+    description: str                  # What this fix does
+    fix_content: str                  # The actual fix (JSON/YAML)
+    security_impact: str              # How it improves security
+    usability_impact: str             # Any usability tradeoffs
+    breaking_changes: List[str]       # What might break
+
+class AttackPath(BaseModel):
+    """Results from Attack Path Analyzer agent"""
+    chain: List[AttackStep]           # Sequence of attack steps
+    entry_point: str                  # Where attack starts
+    target: str                       # What attacker wants
+    likelihood: float                 # 0.0-1.0
+    blast_radius: str                 # Impact description
+    mitre_techniques: List[str]       # MITRE ATT&CK IDs
+    mermaid_diagram: str              # Visual representation
 ```
 
 ### Agent Inventory Model
@@ -325,7 +636,22 @@ secureagent
 │   ├── --output <path>
 │   ├── --min-severity <critical|high|medium|low>
 │   ├── --compliance <owasp|soc2|pci|hipaa>
-│   └── --ci                          # CI mode with exit codes
+│   ├── --ci                          # CI mode with exit codes
+│   │
+│   │   # AI-Enhanced Mode flags (NEW)
+│   ├── --ai                          # Enable AI-enhanced analysis
+│   ├── --no-ai                       # Explicitly disable (default)
+│   ├── --ai-provider <claude|openai|local>
+│   ├── --ai-model <model-name>       # e.g., "haiku", "gpt-4", "llama3"
+│   └── --ai-fix                      # Generate AI remediation options
+│
+├── ai                                # AI-specific commands (NEW)
+│   ├── analyze <finding-id>          # Deep analysis of specific finding
+│   ├── fix <finding-id>              # Generate fix options
+│   ├── attack-paths <target>         # Analyze attack paths (Pro)
+│   ├── enrich <target>               # Threat intel enrichment (Enterprise)
+│   ├── status                        # AI usage/quota status
+│   └── config                        # Configure AI providers
 │
 ├── inventory                         # AI Agent Inventory
 │   ├── discover                      # Auto-discover agents
@@ -351,6 +677,7 @@ secureagent
 │   ├── scan <path>
 │   ├── validate <path>
 │   ├── fix <path>
+│   ├── fix <path> --ai               # AI-generated fixes (NEW)
 │   └── rules
 │
 ├── cloud                             # Cloud scanning
@@ -371,10 +698,80 @@ secureagent
 │   ├── test                          # Test connection
 │   └── status                        # Bot status
 │
+├── monitor                           # Continuous monitoring (Enterprise, NEW)
+│   ├── start                         # Start monitoring daemon
+│   ├── stop                          # Stop monitoring
+│   ├── status                        # Monitoring status
+│   └── alerts                        # View recent alerts
+│
 └── ml                                # ML model management
     ├── train
     ├── validate
     └── info
+```
+
+---
+
+## CLI Usage Examples
+
+### Standard Mode (Default - No LLM)
+
+```bash
+# Basic scanning - rule-based, no external calls
+secureagent scan ./mcp.json
+secureagent scan ./configs/ --scanners mcp,langchain
+secureagent scan . --format sarif --output results.sarif
+
+# Inventory and analysis
+secureagent inventory discover ./project
+secureagent analyze risk ./mcp.json
+secureagent analyze data-flow agent-123
+
+# Compliance reporting
+secureagent compliance report owasp-llm
+secureagent compliance gaps --format html
+
+# CI/CD usage
+secureagent scan . --ci --min-severity high
+```
+
+### AI-Enhanced Mode (Opt-in - Uses LLM)
+
+```bash
+# Enable AI analysis
+secureagent scan ./mcp.json --ai
+secureagent scan ./mcp.json --ai --ai-provider local  # Use local Llama
+
+# Generate AI fixes
+secureagent scan ./mcp.json --ai --ai-fix
+secureagent mcp fix ./mcp.json --ai
+
+# Deep analysis of specific finding
+secureagent ai analyze finding-abc123
+
+# Attack path analysis (Pro tier)
+secureagent ai attack-paths ./mcp.json
+
+# Threat enrichment (Enterprise tier)
+secureagent ai enrich ./mcp.json
+
+# Continuous monitoring (Enterprise tier)
+secureagent monitor start ./configs/
+secureagent monitor status
+```
+
+### Environment Variables
+
+```bash
+# AI Provider Configuration
+export SECUREAGENT_AI_PROVIDER=claude          # claude, openai, local
+export SECUREAGENT_AI_MODEL=haiku              # Model to use
+export ANTHROPIC_API_KEY=sk-ant-...            # For Claude
+export OPENAI_API_KEY=sk-...                   # For OpenAI
+export SECUREAGENT_LOCAL_MODEL_URL=http://localhost:11434  # For Ollama
+
+# Disable AI globally (for air-gapped environments)
+export SECUREAGENT_AI_DISABLED=true
 ```
 
 ---
@@ -485,32 +882,163 @@ secureagent
 - [x] Write end-to-end tests (basic flow)
 - [ ] Write performance tests (not implemented)
 
+### Phase 11: AI-Enhanced Mode (15 files) - 🔲 NOT STARTED
+
+**Phase 11a: Foundation (Days 1-3)**
+- [ ] Implement LLM provider abstraction (`ai_agents/provider/base.py`)
+- [ ] Implement Claude provider (`ai_agents/provider/claude.py`)
+- [ ] Implement OpenAI provider (`ai_agents/provider/openai.py`)
+- [ ] Implement local model provider (`ai_agents/provider/local.py`)
+- [ ] Implement async processing pipeline
+- [ ] Implement rate limiting with tier awareness
+- [ ] Implement BaseAIAgent ABC (`ai_agents/base.py`)
+- [ ] Implement AI agent registry (`ai_agents/registry.py`)
+- [ ] Add AI enhancement fields to Finding model
+
+**Phase 11b: Semantic Analyst (Days 4-8)**
+- [ ] Implement Semantic Analyst agent (`ai_agents/semantic_analyst/agent.py`)
+- [ ] Create prompt templates (`ai_agents/semantic_analyst/prompts.py`)
+- [ ] Define output schemas (`ai_agents/semantic_analyst/schemas.py`)
+- [ ] Implement confidence scoring
+- [ ] Integrate with existing scanners
+- [ ] Add `--ai` flag to scan command
+
+**Phase 11c: Remediation Generator (Days 9-12)**
+- [ ] Implement Remediation Generator agent (`ai_agents/remediation_generator/agent.py`)
+- [ ] Create fix generation prompts (`ai_agents/remediation_generator/prompts.py`)
+- [ ] Implement fix validator (`ai_agents/remediation_generator/validator.py`)
+- [ ] Generate multiple fix options with tradeoffs
+- [ ] Add `--ai-fix` flag to commands
+
+**Phase 11d: Attack Path Analyzer - Pro (Days 13-16)**
+- [ ] Implement Attack Path Analyzer (`ai_agents/attack_path_analyzer/agent.py`)
+- [ ] Create attack chain prompts
+- [ ] Implement MITRE ATT&CK mapping
+- [ ] Implement Mermaid diagram generation
+- [ ] Integrate with existing graph module
+- [ ] Add tier verification for Pro features
+
+**Phase 11e: Enterprise Agents (Days 17-24)**
+- [ ] Implement Threat Intel Enricher (`ai_agents/threat_intel_enricher/agent.py`)
+- [ ] Implement NVD connector (`ai_agents/threat_intel_enricher/sources/nvd.py`)
+- [ ] Implement MITRE connector
+- [ ] Implement Continuous Monitor daemon (`ai_agents/continuous_monitor/daemon.py`)
+- [ ] Implement drift detection
+- [ ] Add `secureagent monitor` commands
+
+**Phase 11f: Testing & Polish (Days 25-30)**
+- [ ] Write AI agent unit tests
+- [ ] Write integration tests for AI mode
+- [ ] Write prompt quality benchmarks
+- [ ] Documentation for AI-enhanced mode
+- [ ] Beta testing with select users
+
 ---
 
-## Remaining Work
+## Tiered Release Roadmap
 
-### High Priority
-1. **Performance tests** - Not implemented, needed for production benchmarking
-2. **ML model training pipeline** - Feature extraction done, full training not complete
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         RELEASE TIMELINE                                │
+└─────────────────────────────────────────────────────────────────────────┘
 
-### Medium Priority
-1. **Additional compliance frameworks** - Could add more industry-specific frameworks
-2. **More scanner types** - Potential for CrewAI, Semantic Kernel specific scanners
-3. **Custom rule DSL** - Basic rules exist, full DSL not implemented
-
-### Low Priority
-1. **Web dashboard** - Not in original plan but would be valuable addition
-2. **Advanced graph algorithms** - Basic implemented, could add centrality analysis
+v1.0.2 (CURRENT) ──────────────────────────────────────────────────────────
+│  ✅ Standard Mode complete
+│  ✅ Rule-based scanning
+│  ✅ Local ML risk scoring
+│  ✅ All integrations
+│
+│  3.5-5 weeks (DevTeam accelerated)
+│                    │
+v2.0 ─────────────────┴────────────────────────────────────────────────────
+│  🔲 AI-Enhanced Mode (Free tier)
+│  🔲 Semantic Analyst agent
+│  🔲 Remediation Generator agent
+│  🔲 100 AI scans/month free
+│
+│  +3 weeks
+│                    │
+v2.5 ─────────────────┴────────────────────────────────────────────────────
+│  🔲 Pro tier launch ($39/mo)
+│  🔲 Attack Path Analyzer agent
+│  🔲 Unlimited AI scans
+│  🔲 Visual attack graphs
+│
+│  +6 weeks
+│                    │
+v3.0 ─────────────────┴────────────────────────────────────────────────────
+│  🔲 Enterprise tier launch ($499/mo)
+│  🔲 Threat Intelligence Enricher
+│  🔲 Continuous Security Monitor
+│  🔲 Real-time drift detection
+│
+└──────────────────────────────────────────────────────────────────────────
+```
 
 ---
 
-## Releases
+## Pricing Tiers
 
-| Version | Date | Highlights |
-|---------|------|------------|
-| v1.0.0 | 2026-01-08 | Initial release with all core features |
-| v1.0.1 | 2026-01-08 | CI/CD fixes, Typer/Click version pinning |
-| v1.0.2 | 2026-01-09 | Fixed MCP scanner "not available" error |
+| Feature | Free | Pro ($39/mo) | Enterprise ($499/mo) |
+|---------|------|--------------|----------------------|
+| **Standard Mode** | | | |
+| Rule-based scanning | ✓ Unlimited | ✓ Unlimited | ✓ Unlimited |
+| ML risk scoring | ✓ | ✓ | ✓ |
+| All 7 scanners | ✓ | ✓ | ✓ |
+| CI/CD integration | ✓ | ✓ | ✓ |
+| SARIF output | ✓ | ✓ | ✓ |
+| Compliance reports | Basic | Full | Full |
+| **AI-Enhanced Mode** | | | |
+| Semantic Analyst | 100/mo | Unlimited | Unlimited |
+| Remediation Generator | 100/mo | Unlimited | Unlimited |
+| Attack Path Analyzer | - | ✓ | ✓ |
+| Threat Intelligence | - | - | ✓ |
+| Continuous Monitoring | - | - | ✓ |
+| **Support** | | | |
+| Community support | ✓ | ✓ | ✓ |
+| Priority support | - | ✓ | ✓ |
+| Dedicated support | - | - | ✓ |
+| SLA | - | - | 99.9% |
+
+---
+
+## Technical Considerations
+
+### Model Selection by Tier
+
+| Tier | Default Model | Fallback | Why |
+|------|---------------|----------|-----|
+| Free | Claude Haiku | Local Llama 3 | Cost-efficient |
+| Pro | Claude Sonnet | Claude Haiku | Better reasoning |
+| Enterprise | Claude Opus | Claude Sonnet | Best quality |
+
+### Cost Controls
+
+| Control | Implementation |
+|---------|----------------|
+| Rate limits | Per-tier monthly quotas |
+| Caching | Cache identical config analyses |
+| Batching | Batch multiple findings per API call |
+| Local fallback | Ollama/Llama for cost-sensitive users |
+
+### Security (AI Mode)
+
+| Concern | Mitigation |
+|---------|------------|
+| Data privacy | Redact secrets before API calls |
+| Prompt injection | Structured output schemas |
+| Hallucination | Confidence scores + human review |
+| API key exposure | Env vars, not config files |
+
+### Air-Gapped Support
+
+```bash
+# For environments without external access
+export SECUREAGENT_AI_DISABLED=true    # Disable AI entirely
+# OR
+export SECUREAGENT_AI_PROVIDER=local   # Use local Ollama
+export SECUREAGENT_LOCAL_MODEL_URL=http://internal-ollama:11434
+```
 
 ---
 
@@ -536,7 +1064,7 @@ azure-mgmt-storage = { version = "^21.0.0", optional = true }
 # Optional: IaC scanning
 python-hcl2 = { version = "^4.3.0", optional = true }
 
-# Optional: ML features
+# Optional: ML features (local)
 numpy = { version = "^1.24.0", optional = true }
 scikit-learn = { version = "^1.3.0", optional = true }
 
@@ -552,6 +1080,9 @@ pygithub = { version = "^2.1.0", optional = true }
 jinja2 = { version = "^3.1.0", optional = true }
 weasyprint = { version = "^60.0", optional = true }  # PDF generation
 
+# Optional: AI-Enhanced Mode (NEW)
+anthropic = { version = "^0.18.0", optional = true }  # Claude API
+
 [tool.poetry.extras]
 aws = ["boto3"]
 azure = ["azure-identity", "azure-mgmt-storage"]
@@ -562,11 +1093,12 @@ openai = ["openai"]
 slack = ["slack-sdk"]
 github = ["pygithub"]
 reports = ["jinja2", "weasyprint"]
+ai = ["anthropic", "openai"]           # AI-Enhanced Mode (NEW)
 full = [
     "boto3", "azure-identity", "azure-mgmt-storage",
     "python-hcl2", "numpy", "scikit-learn",
     "langchain-core", "openai", "slack-sdk", "pygithub",
-    "jinja2", "weasyprint"
+    "jinja2", "weasyprint", "anthropic"
 ]
 
 [tool.poetry.scripts]
@@ -585,33 +1117,71 @@ cybermonitor = "secureagent.cli.compat:cybermonitor_main"
 | **Backward Compatibility** | Yes - keep `mcpscan` and `cybermonitor` as CLI wrappers |
 | **Feature Scope** | Full integration - all scanners, inventory, analysis, compliance, integrations |
 | **AI Frameworks** | MCP, LangChain, OpenAI Assistants, AutoGPT/CrewAI |
-| **Business Model** | Usage-based pricing |
+| **Business Model** | Tiered pricing (capability-based) |
 | **Implementation Approach** | Full build - complete implementation, review at end |
+| **AI Mode** | Opt-in only, standard mode is default |
+| **LLM Provider** | Multi-provider support (Claude, OpenAI, local) |
+| **Air-Gap Support** | Yes - standard mode works fully offline |
 
 ---
 
-## Pricing Tiers (Reference)
+## Releases
 
-| Tier | Price | Limits |
-|------|-------|--------|
-| **Free** | $0/mo | 100 scans/mo, 1 user, public repos |
-| **Pro** | $49/mo | 1,000 scans/mo, 5 users, Slack bot |
-| **Team** | $199/mo | 10,000 scans/mo, 25 users, compliance reports |
-| **Enterprise** | Custom | Unlimited, SSO, audit logs, dedicated support |
+| Version | Date | Highlights |
+|---------|------|------------|
+| v1.0.0 | 2026-01-08 | Initial release with all core features |
+| v1.0.1 | 2026-01-08 | CI/CD fixes, Typer/Click version pinning |
+| v1.0.2 | 2026-01-09 | Fixed MCP scanner "not available" error |
+| v2.0.0 | TBD | AI-Enhanced Mode (Free tier agents) |
+| v2.5.0 | TBD | Pro tier (Attack Path Analyzer) |
+| v3.0.0 | TBD | Enterprise tier (Threat Intel, Monitoring) |
+
+---
+
+## Success Metrics
+
+### Product Metrics
+
+| Metric | Target | Timeline |
+|--------|--------|----------|
+| Standard mode users | 500+ | Week 4 post-launch |
+| AI mode adoption | 30% of users | Week 8 post-v2.0 |
+| Pro subscribers | 50+ | Week 12 post-v2.5 |
+| Enterprise customers | 5+ | Week 16 post-v3.0 |
+
+### Quality Metrics
+
+| Agent | Metric | Target |
+|-------|--------|--------|
+| Semantic Analyst | False positive reduction | >50% |
+| Remediation Generator | Fix adoption rate | >70% |
+| Attack Path Analyzer | Critical paths identified | 100% |
 
 ---
 
 ## Conclusion
 
-**SecureAgent is production-ready.** The project has achieved ~99% completion with all core functionality implemented:
-
-- All 7 scanner types working
+**SecureAgent v1.0.2 is production-ready** with complete Standard Mode functionality:
+- All 7 scanner types working (audits LLMs without using LLMs)
 - Complete inventory system
-- Risk analysis engine
+- Risk analysis engine with 93.2% accuracy ML model
 - 4 compliance frameworks
 - 5 integrations (GitHub, GitLab, Slack, Webhooks, SIEM)
 - CI/CD with Docker images published to ghcr.io
 - 227 tests passing
-- Comprehensive documentation
+- Works fully offline/air-gapped
 
-The remaining 1% consists of nice-to-have features (performance tests, ML training pipeline) that can be added iteratively without blocking deployment.
+**AI-Enhanced Mode (Phase 11)** is the next major milestone:
+- Adds LLM-powered semantic analysis as opt-in enhancement
+- Maintains full backward compatibility
+- Users choose: fast/offline (Standard) or deep/intelligent (AI-Enhanced)
+- Tiered pricing enables sustainable business model
+
+The dual-mode architecture ensures SecureAgent serves both:
+1. **Privacy-conscious users** who want to audit LLMs without using LLMs
+2. **Power users** who want LLM-enhanced security intelligence
+
+---
+
+*Document Version: 3.0 (Dual-Mode Architecture)*
+*January 2026*

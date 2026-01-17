@@ -32,7 +32,13 @@ from secureagent.cli.cloud_commands import cloud_app
 from secureagent.cli.inventory_commands import inventory_app
 from secureagent.cli.analyze_commands import analyze_app
 from secureagent.cli.compliance_commands import compliance_app
+from secureagent.cli.ml_commands import ml_app
+from secureagent.cli.model_commands import model_app
+from secureagent.cli.test_commands import test_app
+from secureagent.cli.detect_commands import detect_app
 from secureagent.cli.compat import compat_app
+from secureagent.cli.rag_commands import rag_app
+from secureagent.cli.multiagent_commands import multiagent_app
 
 app.add_typer(scan_app, name="scan", help="Universal security scanning")
 app.add_typer(mcp_app, name="mcp", help="MCP configuration scanning")
@@ -40,6 +46,12 @@ app.add_typer(cloud_app, name="cloud", help="Cloud infrastructure scanning")
 app.add_typer(inventory_app, name="inventory", help="AI agent inventory & discovery")
 app.add_typer(analyze_app, name="analyze", help="Risk & data flow analysis")
 app.add_typer(compliance_app, name="compliance", help="Compliance reporting")
+app.add_typer(ml_app, name="ml", help="ML model training and management")
+app.add_typer(model_app, name="model", help="Model registry and management")
+app.add_typer(test_app, name="test", help="Active security testing")
+app.add_typer(detect_app, name="detect", help="Jailbreak detection & analysis")
+app.add_typer(rag_app, name="rag", help="RAG security scanning & analysis")
+app.add_typer(multiagent_app, name="multiagent", help="Multi-agent system security scanning")
 
 
 def version_callback(value: bool) -> None:
@@ -137,6 +149,8 @@ def info() -> None:
         ("langchain", "AI Agents", "LangChain agent security"),
         ("openai", "AI Agents", "OpenAI Assistants scanning"),
         ("autogpt", "AI Agents", "AutoGPT/CrewAI scanning"),
+        ("multiagent", "AI Agents", "Multi-agent orchestration security"),
+        ("rag", "AI Agents", "RAG security & poisoning detection"),
         ("aws", "Cloud", "AWS infrastructure scanning"),
         ("azure", "Cloud", "Azure infrastructure scanning"),
         ("terraform", "IaC", "Terraform configuration scanning"),
@@ -159,6 +173,16 @@ def info() -> None:
         ("Data Flow Analysis", "Available"),
         ("Guardrail Coverage", "Available"),
         ("ML Risk Scoring", "Available"),
+        ("ML Model Training", "Available"),
+        ("Auto-Remediation", "Available"),
+        ("Prompt Injection Testing", "Available"),
+        ("Jailbreak Detection", "Available"),
+        ("RAG Security Analysis", "Available"),
+        ("RAG Poisoning Detection", "Available"),
+        ("Multi-Agent Security", "Available"),
+        ("Agent Orchestration Analysis", "Available"),
+        ("Delegation Attack Detection", "Available"),
+        ("LangGraph/AutoGen Support", "Available"),
         ("OWASP LLM Top 10", "Available"),
         ("SOC2 Compliance", "Available"),
         ("GitHub Integration", "Available"),

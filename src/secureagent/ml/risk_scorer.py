@@ -119,6 +119,21 @@ class RiskScorer:
         """Score a single finding."""
         return self._score_finding(finding)
 
+    def score(self, finding: Finding) -> float:
+        """Score a single finding (alias for score_finding)."""
+        return self._score_finding(finding)
+
+    def score_batch(self, findings: List[Finding]) -> List[float]:
+        """Score multiple findings in batch.
+
+        Args:
+            findings: List of findings to score
+
+        Returns:
+            List of risk scores (0.0-1.0)
+        """
+        return [self._score_finding(f) for f in findings]
+
     def _score_finding(self, finding: Finding) -> float:
         """Calculate risk score for a finding."""
         # Base score from severity

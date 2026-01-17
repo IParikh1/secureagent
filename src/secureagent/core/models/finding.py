@@ -25,6 +25,7 @@ class FindingDomain(str, Enum):
     CLOUDTRAIL = "cloudtrail"
     GRAPH = "graph"
     INVENTORY = "inventory"
+    CLOUD = "cloud"  # Generic cloud domain for cross-provider findings
 
 
 class Location(BaseModel):
