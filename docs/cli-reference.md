@@ -10,11 +10,14 @@ Complete command reference for SecureAgent.
 2. [scan](#scan)
 3. [mcp](#mcp)
 4. [cloud](#cloud)
-5. [inventory](#inventory)
-6. [analyze](#analyze)
-7. [compliance](#compliance)
-8. [github](#github)
-9. [slack](#slack)
+5. [rag](#rag)
+6. [multiagent](#multiagent)
+7. [detect](#detect)
+8. [inventory](#inventory)
+9. [analyze](#analyze)
+10. [compliance](#compliance)
+11. [github](#github)
+12. [slack](#slack)
 
 ---
 
@@ -74,6 +77,8 @@ mcp         - MCP server configurations
 langchain   - LangChain Python code
 openai      - OpenAI Assistants code
 autogpt     - AutoGPT/CrewAI code
+multiagent  - Multi-agent orchestration security
+rag         - RAG system security
 aws         - Live AWS account
 azure       - Live Azure account
 terraform   - Terraform files
@@ -262,6 +267,250 @@ secureagent cloud scan --provider all
 
 # Output to JSON
 secureagent cloud scan --provider aws --format json --output aws-results.json
+```
+
+---
+
+## rag
+
+RAG (Retrieval-Augmented Generation) security scanning commands.
+
+### rag scan
+
+```bash
+secureagent rag scan [OPTIONS] TARGET
+```
+
+Full RAG system security scan.
+
+| Option | Description |
+|--------|-------------|
+| `--format`, `-f` | Output format |
+| `--output`, `-o` | Output file |
+| `--min-severity` | Minimum severity to report |
+
+### rag vector-stores
+
+```bash
+secureagent rag vector-stores [OPTIONS] TARGET
+```
+
+Analyze vector store security.
+
+| Option | Description |
+|--------|-------------|
+| `--provider` | Vector store provider (pinecone, chroma, etc.) |
+| `--check-encryption` | Check encryption settings |
+| `--check-access` | Check access controls |
+
+### rag documents
+
+```bash
+secureagent rag documents [OPTIONS] TARGET
+```
+
+Analyze document ingestion security.
+
+| Option | Description |
+|--------|-------------|
+| `--scan-content` | Scan document contents |
+| `--check-metadata` | Check metadata handling |
+
+### rag poisoning
+
+```bash
+secureagent rag poisoning [OPTIONS] TARGET
+```
+
+Detect RAG poisoning attempts.
+
+| Option | Description |
+|--------|-------------|
+| `--deep-scan` | Perform deep analysis |
+| `--check-embeddings` | Analyze embeddings |
+
+### rag test
+
+```bash
+secureagent rag test [OPTIONS] ENDPOINT
+```
+
+Active security testing with RAG payloads.
+
+| Option | Description |
+|--------|-------------|
+| `--payloads` | Payload categories to test |
+| `--timeout` | Request timeout |
+
+### Examples
+
+```bash
+# Full RAG scan
+secureagent rag scan ./rag-project
+
+# Check vector store security
+secureagent rag vector-stores ./config --provider pinecone
+
+# Analyze document ingestion
+secureagent rag documents ./ingestion
+
+# Detect poisoning
+secureagent rag poisoning ./knowledge-base
+
+# Test RAG endpoint
+secureagent rag test http://localhost:8000/query
+```
+
+---
+
+## multiagent
+
+Multi-agent system security scanning commands.
+
+### multiagent scan
+
+```bash
+secureagent multiagent scan [OPTIONS] TARGET
+```
+
+Full multi-agent system security scan.
+
+| Option | Description |
+|--------|-------------|
+| `--format`, `-f` | Output format |
+| `--output`, `-o` | Output file |
+| `--frameworks` | Specific frameworks to scan |
+
+### multiagent orchestration
+
+```bash
+secureagent multiagent orchestration [OPTIONS] TARGET
+```
+
+Analyze orchestration security.
+
+| Option | Description |
+|--------|-------------|
+| `--check-cycles` | Check for workflow cycles |
+| `--check-privileges` | Analyze privilege escalation |
+
+### multiagent communication
+
+```bash
+secureagent multiagent communication [OPTIONS] TARGET
+```
+
+Analyze agent communication channels.
+
+| Option | Description |
+|--------|-------------|
+| `--check-encryption` | Verify channel encryption |
+| `--check-auth` | Check authentication |
+
+### multiagent delegation
+
+```bash
+secureagent multiagent delegation [OPTIONS] TARGET
+```
+
+Detect delegation attacks.
+
+| Option | Description |
+|--------|-------------|
+| `--max-depth` | Maximum delegation depth |
+| `--check-circular` | Check for circular delegation |
+
+### multiagent frameworks
+
+```bash
+secureagent multiagent frameworks [OPTIONS] TARGET
+```
+
+Detect and analyze multi-agent frameworks.
+
+| Option | Description |
+|--------|-------------|
+| `--detailed` | Show detailed analysis |
+
+### multiagent test
+
+```bash
+secureagent multiagent test [OPTIONS] ENDPOINT
+```
+
+Active security testing with multi-agent payloads.
+
+| Option | Description |
+|--------|-------------|
+| `--payloads` | Payload categories to test |
+| `--timeout` | Request timeout |
+
+### Examples
+
+```bash
+# Full multi-agent scan
+secureagent multiagent scan ./project
+
+# Check orchestration
+secureagent multiagent orchestration ./workflow
+
+# Analyze communication
+secureagent multiagent communication ./config
+
+# Detect delegation attacks
+secureagent multiagent delegation ./agents
+
+# Detect frameworks
+secureagent multiagent frameworks ./project
+
+# Test endpoint
+secureagent multiagent test http://localhost:8000/agent
+```
+
+---
+
+## detect
+
+Jailbreak detection and analysis commands.
+
+### detect jailbreak
+
+```bash
+secureagent detect jailbreak [OPTIONS] INPUT
+```
+
+Detect jailbreak attempts in prompts.
+
+| Option | Description |
+|--------|-------------|
+| `--model` | Detection model to use |
+| `--threshold` | Detection threshold |
+| `--detailed` | Show detailed analysis |
+
+### detect analyze
+
+```bash
+secureagent detect analyze [OPTIONS] TARGET
+```
+
+Analyze prompts for injection patterns.
+
+| Option | Description |
+|--------|-------------|
+| `--patterns` | Pattern categories to check |
+| `--output`, `-o` | Output file |
+
+### Examples
+
+```bash
+# Detect jailbreak in input
+secureagent detect jailbreak "Ignore previous instructions..."
+
+# Analyze prompt file
+secureagent detect analyze ./prompts.txt
+
+# Detailed analysis
+secureagent detect jailbreak "input" --detailed --threshold 0.8
 ```
 
 ---

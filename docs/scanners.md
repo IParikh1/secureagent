@@ -10,9 +10,12 @@ SecureAgent includes multiple specialized scanners for different types of AI sys
 2. [MCP Scanner](#mcp-scanner)
 3. [LangChain Scanner](#langchain-scanner)
 4. [OpenAI Assistants Scanner](#openai-assistants-scanner)
-5. [AWS Scanner](#aws-scanner)
-6. [Azure Scanner](#azure-scanner)
-7. [Terraform Scanner](#terraform-scanner)
+5. [AutoGPT/CrewAI Scanner](#autogptcrewai-scanner)
+6. [Multi-Agent Security Scanner](#multi-agent-security-scanner)
+7. [RAG Security Scanner](#rag-security-scanner)
+8. [AWS Scanner](#aws-scanner)
+9. [Azure Scanner](#azure-scanner)
+10. [Terraform Scanner](#terraform-scanner)
 
 ---
 
@@ -40,6 +43,9 @@ flowchart TB
 | **MCP** | MCP server configs | Credentials, shell commands, permissions |
 | **LangChain** | Python code | Dangerous tools, API keys, memory leaks |
 | **OpenAI** | Python code | Code interpreter, function calls, file access |
+| **AutoGPT** | Python/YAML | Multi-agent autonomy, delegation, tools |
+| **Multi-Agent** | Multi-agent systems | Orchestration, communication, delegation |
+| **RAG** | RAG systems | Vector stores, documents, poisoning |
 | **AWS** | Live AWS account | S3, IAM, EC2, security groups |
 | **Azure** | Live Azure account | Storage, Key Vault, networking |
 | **Terraform** | `.tf` files | IaC misconfigurations |
@@ -323,6 +329,294 @@ assistant = client.beta.assistants.create(
 ```bash
 # Scan for OpenAI patterns
 secureagent scan ./assistant.py --scanners openai
+```
+
+---
+
+## AutoGPT/CrewAI Scanner
+
+Analyzes AutoGPT and CrewAI multi-agent configurations for security vulnerabilities.
+
+### What It Scans
+
+```mermaid
+graph TB
+    subgraph "AutoGPT/CrewAI Code"
+        AGENTS[Agent Definitions]
+        CREWS[Crew Configurations]
+        TOOLS_AG[Tool Assignments]
+        DELEGATION[Delegation Settings]
+    end
+
+    subgraph "Security Checks"
+        API_KEY[API Key Exposure]
+        AUTONOMY[Autonomy Risks]
+        SHELL_AG[Shell Access]
+        TRUST[Trust Boundaries]
+    end
+
+    AGENTS --> API_KEY & AUTONOMY
+    CREWS --> TRUST
+    TOOLS_AG --> SHELL_AG
+    DELEGATION --> TRUST
+```
+
+### Security Rules
+
+| Rule ID | Name | Severity | CWE | Description |
+|---------|------|----------|-----|-------------|
+| AG-001 | Hardcoded API Keys | CRITICAL | CWE-798 | API keys in source code |
+| AG-002 | Unrestricted Agent Autonomy | HIGH | CWE-269 | No limits on agent actions |
+| AG-003 | Dangerous Tool Access | HIGH | CWE-78 | Shell/system tool access |
+| AG-004 | Inter-Agent Trust | MEDIUM | CWE-862 | Trust between agents |
+| AG-005 | No Memory Limits | MEDIUM | CWE-770 | Unbounded memory usage |
+| AG-006 | Unconstrained Delegation | MEDIUM | CWE-285 | No delegation limits |
+| AG-007 | Web Browsing Without Filters | MEDIUM | CWE-918 | Unrestricted web access |
+| AG-008 | Verbose Logging | LOW | CWE-532 | Debug logging in production |
+| AG-009 | No Iteration Limits | MEDIUM | CWE-834 | Unbounded loop iterations |
+| AG-010 | Missing Error Boundaries | MEDIUM | CWE-755 | No error handling |
+
+### Example Findings
+
+**Dangerous Tool Access:**
+```python
+from crewai import Agent
+
+agent = Agent(
+    role="Executor",
+    tools=[shell, execute_shell]  # ❌ Shell access!
+)
+```
+
+**Unconstrained Delegation:**
+```python
+agent = Agent(
+    role="Manager",
+    allow_delegation=True  # ⚠️ No delegation limits
+)
+```
+
+### Command Line
+
+```bash
+# Scan CrewAI project
+secureagent scan ./crew-project --scanners autogpt
+
+# List AutoGPT rules
+secureagent rules --scanner autogpt
+```
+
+---
+
+## Multi-Agent Security Scanner
+
+Comprehensive security analysis for multi-agent systems including LangGraph, AutoGen, CrewAI, and custom orchestration.
+
+### What It Scans
+
+```mermaid
+graph TB
+    subgraph "Multi-Agent Systems"
+        ORCH[Orchestration Workflows]
+        COMM[Communication Channels]
+        DELEG[Delegation Chains]
+        FRAME[Framework Configs]
+    end
+
+    subgraph "Security Analysis"
+        CYCLE[Cycle Detection]
+        ENCRYPT[Encryption Check]
+        PRIV_ESC[Privilege Escalation]
+        INJECT[Injection Risks]
+    end
+
+    ORCH --> CYCLE & PRIV_ESC
+    COMM --> ENCRYPT & INJECT
+    DELEG --> PRIV_ESC & CYCLE
+    FRAME --> INJECT
+```
+
+### Supported Frameworks
+
+- **LangGraph** - Workflow and state machine analysis
+- **AutoGen** - Conversation pattern analysis
+- **CrewAI** - Crew and agent configuration analysis
+- **AutoGPT** - Agent configuration analysis
+
+### Security Rules
+
+#### Orchestration Rules (MA-ORCH-001 to MA-ORCH-010)
+
+| Rule ID | Name | Severity | Description |
+|---------|------|----------|-------------|
+| MA-ORCH-001 | Workflow Cycle Detection | HIGH | Infinite loops in workflows |
+| MA-ORCH-002 | Privilege Escalation Path | HIGH | Privilege increase through workflow |
+| MA-ORCH-003 | State Corruption Risk | MEDIUM | Unsafe state transitions |
+| MA-ORCH-004 | Unbounded Recursion | HIGH | No recursion limits |
+| MA-ORCH-005 | Missing Termination | MEDIUM | No workflow end conditions |
+| MA-ORCH-006 | Unsafe State Transitions | HIGH | State manipulation risks |
+| MA-ORCH-007 | Workflow Injection | MEDIUM | External workflow manipulation |
+| MA-ORCH-008 | Missing Audit Trail | LOW | No operation logging |
+| MA-ORCH-009 | Concurrent State Access | HIGH | Race condition risks |
+| MA-ORCH-010 | Orphaned Agent Detection | MEDIUM | Agents without supervision |
+
+#### Communication Rules (MA-COMM-001 to MA-COMM-010)
+
+| Rule ID | Name | Severity | Description |
+|---------|------|----------|-------------|
+| MA-COMM-001 | Unencrypted Communication | CRITICAL | No channel encryption |
+| MA-COMM-002 | Missing Authentication | HIGH | No agent authentication |
+| MA-COMM-003 | Message Injection Risk | HIGH | Untrusted message content |
+| MA-COMM-004 | Replay Attack Vulnerability | MEDIUM | No replay protection |
+| MA-COMM-005 | Channel Isolation Failure | HIGH | Cross-channel leakage |
+| MA-COMM-006 | Message Tampering Risk | MEDIUM | No message integrity |
+| MA-COMM-007 | Broadcast Exposure | MEDIUM | Sensitive data in broadcasts |
+| MA-COMM-008 | Message Logging Risk | LOW | Sensitive data in logs |
+| MA-COMM-009 | Protocol Downgrade | HIGH | Weak protocol allowed |
+| MA-COMM-010 | Message Queue Overflow | MEDIUM | No queue limits |
+
+#### Delegation Rules (MA-DEL-001 to MA-DEL-010)
+
+| Rule ID | Name | Severity | Description |
+|---------|------|----------|-------------|
+| MA-DEL-001 | Circular Delegation | CRITICAL | Delegation loops |
+| MA-DEL-002 | Privilege Escalation via Delegation | CRITICAL | Privilege increase through delegation |
+| MA-DEL-003 | Task Injection | HIGH | Malicious task insertion |
+| MA-DEL-004 | Unauthorized Delegation Chain | HIGH | Unapproved delegation paths |
+| MA-DEL-005 | Delegation Depth Exceeded | MEDIUM | Too many delegation hops |
+| MA-DEL-006 | Cross-Boundary Delegation | HIGH | Delegation across trust zones |
+| MA-DEL-007 | Missing Delegation Audit | MEDIUM | No delegation logging |
+| MA-DEL-008 | Delegation to Untrusted Agent | HIGH | Delegation to unknown agents |
+| MA-DEL-009 | Task Result Tampering | MEDIUM | Unsafe result handling |
+| MA-DEL-010 | Delegation Deadlock | HIGH | Blocked delegation chains |
+
+### Command Line
+
+```bash
+# Full multi-agent scan
+secureagent multiagent scan ./project
+
+# Analyze orchestration
+secureagent multiagent orchestration ./workflow
+
+# Check communication channels
+secureagent multiagent communication ./config
+
+# Detect delegation attacks
+secureagent multiagent delegation ./agents
+
+# Detect frameworks
+secureagent multiagent frameworks ./project
+
+# Active security testing
+secureagent multiagent test ./endpoint
+```
+
+---
+
+## RAG Security Scanner
+
+Comprehensive security scanning for Retrieval-Augmented Generation (RAG) systems.
+
+### What It Scans
+
+```mermaid
+graph TB
+    subgraph "RAG Components"
+        VECTOR[Vector Stores]
+        DOCS[Document Ingestion]
+        EMBED[Embeddings]
+        RETRIEVAL[Retrieval Pipeline]
+    end
+
+    subgraph "Security Checks"
+        ACCESS[Access Controls]
+        POISON[Poisoning Detection]
+        INJECT_RAG[Injection Attacks]
+        ENCRYPT_RAG[Encryption]
+    end
+
+    VECTOR --> ACCESS & ENCRYPT_RAG
+    DOCS --> POISON & INJECT_RAG
+    EMBED --> POISON
+    RETRIEVAL --> INJECT_RAG
+```
+
+### Supported Vector Stores
+
+- Pinecone
+- Chroma
+- Weaviate
+- Qdrant
+- Milvus
+- PGVector
+- Redis
+- FAISS
+
+### Security Rules
+
+#### Vector Store Rules (RAG-VS-001 to RAG-VS-010)
+
+| Rule ID | Name | Severity | Description |
+|---------|------|----------|-------------|
+| RAG-VS-001 | Missing Access Controls | CRITICAL | No authentication |
+| RAG-VS-002 | Unencrypted Storage | HIGH | Data not encrypted at rest |
+| RAG-VS-003 | Network Exposure | HIGH | Public network access |
+| RAG-VS-004 | Missing Authentication | MEDIUM | No API authentication |
+| RAG-VS-005 | Weak Encryption | MEDIUM | Weak encryption algorithms |
+| RAG-VS-006 | Data Exfiltration Risk | HIGH | Bulk data export enabled |
+| RAG-VS-007 | Missing Audit Logging | MEDIUM | No access logging |
+| RAG-VS-008 | Metadata Exposure | LOW | Sensitive metadata visible |
+| RAG-VS-009 | Cross-Tenant Access | HIGH | Multi-tenant isolation failure |
+| RAG-VS-010 | Backup Security | MEDIUM | Unprotected backups |
+
+#### Document Ingestion Rules (RAG-DOC-001 to RAG-DOC-010)
+
+| Rule ID | Name | Severity | Description |
+|---------|------|----------|-------------|
+| RAG-DOC-001 | Malicious Document | CRITICAL | Malware in documents |
+| RAG-DOC-002 | Metadata Injection | HIGH | Malicious metadata |
+| RAG-DOC-003 | Format Exploitation | HIGH | Document format exploits |
+| RAG-DOC-004 | Oversized Document | MEDIUM | DoS via large documents |
+| RAG-DOC-005 | Encoding Attack | MEDIUM | Encoding-based attacks |
+| RAG-DOC-006 | Path Traversal | HIGH | File path manipulation |
+| RAG-DOC-007 | Content Type Mismatch | MEDIUM | MIME type spoofing |
+| RAG-DOC-008 | Duplicate Detection | LOW | Duplicate content issues |
+| RAG-DOC-009 | Script Injection | HIGH | Embedded scripts |
+| RAG-DOC-010 | Sanitization Bypass | MEDIUM | Bypassing input filters |
+
+#### RAG Poisoning Rules (RAG-POISON-001 to RAG-POISON-010)
+
+| Rule ID | Name | Severity | Description |
+|---------|------|----------|-------------|
+| RAG-POISON-001 | Knowledge Base Poisoning | CRITICAL | Malicious knowledge injection |
+| RAG-POISON-002 | Embedding Manipulation | CRITICAL | Manipulated embeddings |
+| RAG-POISON-003 | Retrieval Hijacking | HIGH | Redirecting retrievals |
+| RAG-POISON-004 | Context Overflow | HIGH | Context window attacks |
+| RAG-POISON-005 | Semantic Injection | HIGH | Semantic manipulation |
+| RAG-POISON-006 | Relevance Manipulation | MEDIUM | Relevance score gaming |
+| RAG-POISON-007 | Source Attribution Attack | HIGH | False source attribution |
+| RAG-POISON-008 | Temporal Poisoning | MEDIUM | Time-based attacks |
+| RAG-POISON-009 | Cross-Document Injection | HIGH | Cross-document attacks |
+| RAG-POISON-010 | Chunk Boundary Attack | MEDIUM | Chunk manipulation |
+
+### Command Line
+
+```bash
+# Full RAG security scan
+secureagent rag scan ./rag-project
+
+# Analyze vector store security
+secureagent rag vector-stores ./config
+
+# Check document ingestion
+secureagent rag documents ./ingestion-pipeline
+
+# Detect RAG poisoning
+secureagent rag poisoning ./knowledge-base
+
+# Active security testing
+secureagent rag test ./rag-endpoint
 ```
 
 ---

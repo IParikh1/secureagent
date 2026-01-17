@@ -9,7 +9,7 @@
 [![CI](https://github.com/IParikh1/secureagent/actions/workflows/ci.yml/badge.svg)](https://github.com/IParikh1/secureagent/actions/workflows/ci.yml)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-226%20passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-308%20passed-brightgreen.svg)]()
 
 [Quick Start](#-quick-start) • [Features](#-key-features) • [Documentation](docs/) • [Examples](examples/)
 
@@ -55,6 +55,9 @@
 | "What happens if an agent is compromised?" | **Blast Radius Analysis** - Shows exactly what could be affected |
 | "Am I compliant with security standards?" | **Compliance Mapping** - Maps findings to OWASP, SOC2, PCI-DSS, HIPAA |
 | "My cloud resources might be exposed" | **Cloud Scanning** - Checks AWS, Azure, and Terraform configurations |
+| "Is my RAG system vulnerable to poisoning?" | **RAG Security** - Detects poisoning, injection attacks, and vector store issues |
+| "Are my multi-agent systems secure?" | **Multi-Agent Security** - Analyzes orchestration, delegation, and communication |
+| "Can attackers jailbreak my AI?" | **Jailbreak Detection** - Identifies prompt injection and jailbreak attempts |
 
 ---
 
@@ -135,6 +138,8 @@ graph LR
         LC[LangChain]
         OAI[OpenAI Assistants]
         AUTO[AutoGPT/CrewAI]
+        RAG[RAG Systems]
+        MA[Multi-Agent<br/>LangGraph/AutoGen]
     end
 
     subgraph "Security Checks"
@@ -142,12 +147,16 @@ graph LR
         CMD[Command Injection]
         PRIV[Privilege Analysis]
         DATA[Data Exposure]
+        POISON[Poisoning Detection]
+        DELEG[Delegation Attacks]
     end
 
     MCP --> CRED
     LC --> CMD
     OAI --> PRIV
     AUTO --> DATA
+    RAG --> POISON
+    MA --> DELEG
 ```
 
 ### 2. AI Inventory & Discovery
@@ -205,6 +214,78 @@ secureagent compliance report soc2
 
 # Export compliance report
 secureagent compliance export --format html
+```
+
+### 6. RAG Security Analysis
+
+Comprehensive security scanning for Retrieval-Augmented Generation systems:
+
+```bash
+# Scan RAG system for vulnerabilities
+secureagent rag scan ./rag-project
+
+# Analyze vector store security
+secureagent rag vector-stores ./config
+
+# Detect document poisoning
+secureagent rag poisoning ./documents
+
+# Test RAG security with payloads
+secureagent rag test ./rag-endpoint
+```
+
+**Supported Vector Stores:** Pinecone, Chroma, Weaviate, Qdrant, Milvus, PGVector, Redis, FAISS
+
+**Security Checks:**
+- Vector store access controls and encryption
+- Document ingestion security
+- RAG poisoning detection
+- Embedding manipulation attacks
+- Query injection vulnerabilities
+
+### 7. Multi-Agent Security
+
+Analyze orchestration, communication, and delegation in multi-agent systems:
+
+```bash
+# Scan multi-agent system
+secureagent multiagent scan ./agents
+
+# Analyze orchestration security
+secureagent multiagent orchestration ./workflow
+
+# Check agent communication channels
+secureagent multiagent communication ./config
+
+# Detect delegation attacks
+secureagent multiagent delegation ./agents
+
+# Detect multi-agent frameworks
+secureagent multiagent frameworks ./project
+```
+
+**Supported Frameworks:** LangGraph, AutoGen, CrewAI, AutoGPT
+
+**Security Checks:**
+- Orchestration workflow vulnerabilities (30 rules)
+- Agent communication channel security (encryption, authentication)
+- Delegation attack detection (circular delegation, privilege escalation)
+- Inter-agent trust boundaries
+- Task injection and poisoning
+
+### 8. Jailbreak Detection
+
+Identify prompt injection and jailbreak attempts:
+
+```bash
+# Detect jailbreak attempts in prompts
+secureagent detect jailbreak "user input here"
+
+# Analyze prompt for injection patterns
+secureagent detect analyze ./prompts
+
+# Test with known jailbreak payloads
+secureagent test prompt-injection ./endpoint
 ```
 
 ---
