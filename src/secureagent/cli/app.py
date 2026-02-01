@@ -11,6 +11,7 @@ from rich.table import Table
 from secureagent import __version__
 from secureagent.core.config import get_config, load_config
 from secureagent.core.models.severity import Severity
+from secureagent.telemetry import get_telemetry, get_telemetry_config
 
 # Import scanners to register them with the registry
 import secureagent.scanners  # noqa: F401
@@ -72,6 +73,14 @@ def show_banner() -> None:
     console.print(banner)
 
 
+def _show_telemetry_notice() -> None:
+    """Show the first-run telemetry notice if applicable."""
+    telemetry_config = get_telemetry_config()
+    if telemetry_config.is_first_run() and telemetry_config.is_enabled():
+        console.print(telemetry_config.get_first_run_notice())
+        telemetry_config.mark_notice_shown()
+
+
 @app.callback()
 def main(
     version: bool = typer.Option(
@@ -99,6 +108,12 @@ def main(
         "-q",
         help="Suppress non-essential output",
     ),
+    no_telemetry: bool = typer.Option(
+        False,
+        "--no-telemetry",
+        help="Disable telemetry for this session",
+        hidden=True,
+    ),
 ) -> None:
     """SecureAgent - Comprehensive AI & Cloud Security Platform.
 
@@ -116,6 +131,15 @@ def main(
         config.log_level = "DEBUG"
     elif quiet:
         config.log_level = "WARNING"
+
+    # Show first-run telemetry notice (unless quiet mode)
+    if not quiet:
+        _show_telemetry_notice()
+
+    # Track CLI start (respects --no-telemetry flag via environment override)
+    if not no_telemetry:
+        telemetry = get_telemetry()
+        telemetry.track_cli_start()
 
 
 @app.command()
