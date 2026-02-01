@@ -1,0 +1,150 @@
+{
+  "name": "secureagent",
+  "displayName": "SecureAgent - AI Security Scanner",
+  "description": "Security scanner for MCP configurations, AI agent setups, and cloud infrastructure. Detect vulnerabilities in your AI-powered applications.",
+  "version": "0.1.0",
+  "publisher": "secureagent",
+  "license": "Apache-2.0",
+  "icon": "assets/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/secureagent/secureagent"
+  },
+  "homepage": "https://secureagent.dev",
+  "bugs": {
+    "url": "https://github.com/secureagent/secureagent/issues"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters",
+    "Other"
+  ],
+  "keywords": [
+    "security",
+    "mcp",
+    "ai",
+    "claude",
+    "langchain",
+    "openai",
+    "vulnerability",
+    "scanner"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/*.mcp.json",
+    "workspaceContains:**/claude_desktop_config.json",
+    "workspaceContains:**/mcp_config.json",
+    "onCommand:secureagent.scanWorkspace",
+    "onCommand:secureagent.scanCurrentFile"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "secureagent.scanWorkspace",
+        "title": "SecureAgent: Scan Workspace",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "secureagent.scanCurrentFile",
+        "title": "SecureAgent: Scan Current File",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "secureagent.showOutput",
+        "title": "SecureAgent: Show Output Panel"
+      },
+      {
+        "command": "secureagent.clearDiagnostics",
+        "title": "SecureAgent: Clear All Diagnostics"
+      }
+    ],
+    "configuration": {
+      "title": "SecureAgent",
+      "properties": {
+        "secureagent.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable SecureAgent scanning"
+        },
+        "secureagent.cliPath": {
+          "type": "string",
+          "default": "secureagent",
+          "description": "Path to the SecureAgent CLI executable"
+        },
+        "secureagent.scanOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically scan files on save"
+        },
+        "secureagent.scanTimeout": {
+          "type": "number",
+          "default": 30000,
+          "description": "Timeout for scan operations in milliseconds"
+        },
+        "secureagent.severityFilter": {
+          "type": "string",
+          "enum": ["all", "critical", "high", "medium", "low"],
+          "default": "all",
+          "description": "Minimum severity level to display"
+        },
+        "secureagent.telemetryEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable anonymous usage telemetry"
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "json",
+        "extensions": [".mcp.json"],
+        "aliases": ["MCP Configuration"]
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": ["*.mcp.json", "claude_desktop_config.json", "mcp_config.json"],
+        "url": "./schemas/mcp-config.schema.json"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "secureagent.scanCurrentFile",
+          "when": "resourceFilename =~ /(\\.mcp\\.json|claude_desktop_config\\.json|mcp_config\\.json)$/",
+          "group": "secureagent"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "secureagent.scanCurrentFile",
+          "when": "resourceFilename =~ /(\\.mcp\\.json|claude_desktop_config\\.json|mcp_config\\.json)$/",
+          "group": "secureagent"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^2.22.0",
+    "eslint": "^8.55.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {}
+}

@@ -1,0 +1,52 @@
+# Source files (compiled to out/)
+src/**
+
+# Development files
+.vscode/**
+.vscode-test/**
+node_modules/**
+*.map
+
+# TypeScript config
+tsconfig.json
+.eslintrc.json
+.prettierrc
+
+# Tests
+**/test/**
+**/*.test.ts
+
+# Git
+.git/**
+.gitignore
+
+# Documentation source
+docs/**
+
+# CI/CD
+.github/**
+.travis.yml
+.circleci/**
+azure-pipelines.yml
+
+# Package management
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Development artifacts
+*.vsix
+coverage/**
+.nyc_output/**
+
+# Editor config
+.editorconfig
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log

@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://secureagent.dev/schemas/mcp-config.schema.json",
+  "title": "MCP Configuration",
+  "description": "Schema for Model Context Protocol (MCP) configuration files",
+  "type": "object",
+  "properties": {
+    "mcpServers": {
+      "type": "object",
+      "description": "MCP server configurations",
+      "additionalProperties": {
+        "$ref": "#/definitions/mcpServer"
+      }
+    },
+    "globalShortcut": {
+      "type": "string",
+      "description": "Global keyboard shortcut"
+    },
+    "settings": {
+      "type": "object",
+      "description": "Global settings",
+      "properties": {
+        "telemetry": {
+          "type": "boolean",
+          "description": "Enable/disable telemetry"
+        },
+        "theme": {
+          "type": "string",
+          "description": "UI theme"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "mcpServer": {
+      "type": "object",
+      "description": "MCP server configuration",
+      "required": ["command"],
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command to start the MCP server"
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Command line arguments"
+        },
+        "env": {
+          "type": "object",
+          "description": "Environment variables",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "cwd": {
+          "type": "string",
+          "description": "Working directory for the server"
+        },
+        "disabled": {
+          "type": "boolean",
+          "description": "Disable this server",
+          "default": false
+        },
+        "alwaysAllow": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Tools to always allow without confirmation"
+        },
+        "timeout": {
+          "type": "number",
+          "description": "Connection timeout in milliseconds"
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

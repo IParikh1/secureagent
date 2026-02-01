@@ -1,0 +1,19 @@
+PLACEHOLDER: SecureAgent Extension Icon
+
+This file should be replaced with an actual PNG icon (128x128 or 256x256 pixels).
+
+Icon design guidelines:
+- Use a shield or lock symbol representing security
+- Include colors that convey trust (blue, green)
+- Keep it simple and recognizable at small sizes
+- Follow VS Code extension icon guidelines
+
+Suggested design:
+- A shield with a checkmark or lock
+- SecureAgent "S" monogram
+- Circuit/digital pattern suggesting AI/technology
+
+For production, create a proper PNG using design tools like:
+- Figma
+- Adobe Illustrator
+- Inkscape (free)
