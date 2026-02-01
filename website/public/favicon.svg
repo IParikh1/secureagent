@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="shield-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0ea5e9"/>
+      <stop offset="100%" style="stop-color:#d946ef"/>
+    </linearGradient>
+  </defs>
+  <!-- Shield outline -->
+  <path d="M64 8L16 28v36c0 28 20 48 48 56 28-8 48-28 48-56V28L64 8z"
+        fill="url(#shield-gradient)"
+        stroke="white"
+        stroke-width="2"/>
+  <!-- Lock body -->
+  <rect x="44" y="56" width="40" height="32" rx="4" fill="white"/>
+  <!-- Lock shackle -->
+  <path d="M52 56V44c0-6.627 5.373-12 12-12s12 5.373 12 12v12"
+        stroke="white"
+        stroke-width="6"
+        stroke-linecap="round"
+        fill="none"/>
+  <!-- Keyhole -->
+  <circle cx="64" cy="68" r="4" fill="url(#shield-gradient)"/>
+  <rect x="62" y="70" width="4" height="10" rx="2" fill="url(#shield-gradient)"/>
+</svg>

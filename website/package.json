@@ -1,0 +1,23 @@
+{
+  "name": "secureagent-website",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "SecureAgent landing page - Open-source security scanner for AI agents",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "astro": "^4.16.0",
+    "@astrojs/check": "^0.9.0",
+    "@astrojs/tailwind": "^5.1.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0"
+  }
+}

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#1e293b"/>
+    </linearGradient>
+    <linearGradient id="accent-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0ea5e9"/>
+      <stop offset="100%" style="stop-color:#d946ef"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg-gradient)"/>
+
+  <!-- Grid pattern -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#334155" stroke-width="0.5"/>
+  </pattern>
+  <rect width="1200" height="630" fill="url(#grid)" opacity="0.3"/>
+
+  <!-- Shield icon -->
+  <g transform="translate(100, 165)">
+    <path d="M150 0L0 60v108c0 84 60 144 144 168 84-24 144-84 144-168V60L150 0z"
+          fill="url(#accent-gradient)"
+          opacity="0.9"/>
+    <rect x="90" y="120" width="120" height="96" rx="12" fill="white"/>
+    <path d="M114 120V96c0-19.88 16.12-36 36-36s36 16.12 36 36v24"
+          stroke="white"
+          stroke-width="18"
+          stroke-linecap="round"
+          fill="none"/>
+    <circle cx="150" cy="156" r="12" fill="url(#accent-gradient)"/>
+    <rect x="144" y="162" width="12" height="30" rx="6" fill="url(#accent-gradient)"/>
+  </g>
+
+  <!-- Text -->
+  <text x="500" y="260" font-family="Inter, system-ui, sans-serif" font-size="72" font-weight="700" fill="white">
+    SecureAgent
+  </text>
+  <text x="500" y="340" font-family="Inter, system-ui, sans-serif" font-size="32" fill="#94a3b8">
+    Secure Your AI Agents Before They're Exploited
+  </text>
+
+  <!-- Install command -->
+  <rect x="500" y="380" width="520" height="60" rx="8" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+  <text x="530" y="420" font-family="JetBrains Mono, monospace" font-size="24" fill="#38bdf8">
+    pip install secureagent
+  </text>
+
+  <!-- URL -->
+  <text x="500" y="520" font-family="Inter, system-ui, sans-serif" font-size="28" fill="#64748b">
+    secureagent.dev
+  </text>
+</svg>

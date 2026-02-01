@@ -1,0 +1,148 @@
+---
+// Animated terminal demo component
+---
+
+<section class="py-16 lg:py-24 px-6 lg:px-8">
+  <div class="max-w-4xl mx-auto">
+    <!-- Terminal window -->
+    <div class="terminal shadow-2xl shadow-primary-500/10">
+      <!-- Terminal header -->
+      <div class="terminal-header">
+        <div class="terminal-dot bg-red-500"></div>
+        <div class="terminal-dot bg-yellow-500"></div>
+        <div class="terminal-dot bg-green-500"></div>
+        <span class="ml-4 text-dark-400 text-sm font-mono">secureagent - Terminal</span>
+      </div>
+
+      <!-- Terminal body -->
+      <div class="terminal-body min-h-[320px]" id="terminal-output">
+        <div class="terminal-line" data-delay="0">
+          <span class="text-primary-400">$</span>
+          <span class="text-dark-100 ml-2">secureagent scan ./my-agent</span>
+        </div>
+        <div class="terminal-line" data-delay="500">
+          <span class="text-dark-400">&nbsp;</span>
+        </div>
+        <div class="terminal-line" data-delay="800">
+          <span class="text-primary-400">SecureAgent</span>
+          <span class="text-dark-300"> v1.0.0 - AI Security Scanner</span>
+        </div>
+        <div class="terminal-line" data-delay="1100">
+          <span class="text-dark-400">&nbsp;</span>
+        </div>
+        <div class="terminal-line" data-delay="1400">
+          <span class="text-dark-300">[</span>
+          <span class="text-primary-400 animate-pulse">*</span>
+          <span class="text-dark-300">] Scanning MCP configuration...</span>
+        </div>
+        <div class="terminal-line" data-delay="1900">
+          <span class="text-green-400">&#10004;</span>
+          <span class="text-dark-300 ml-2">Found 3 MCP servers configured</span>
+        </div>
+        <div class="terminal-line" data-delay="2400">
+          <span class="text-dark-300">[</span>
+          <span class="text-primary-400 animate-pulse">*</span>
+          <span class="text-dark-300">] Analyzing tool permissions...</span>
+        </div>
+        <div class="terminal-line" data-delay="2900">
+          <span class="text-dark-400">&nbsp;</span>
+        </div>
+        <div class="terminal-line" data-delay="3200">
+          <span class="text-red-400 font-semibold">&#9888; CRITICAL:</span>
+          <span class="text-dark-100 ml-2">Tool injection vulnerability found</span>
+        </div>
+        <div class="terminal-line pl-6" data-delay="3400">
+          <span class="text-dark-400">&#8627; File: ./mcp_config.json:15</span>
+        </div>
+        <div class="terminal-line pl-6" data-delay="3500">
+          <span class="text-dark-400">&#8627; Tool "execute_code" accepts unvalidated input</span>
+        </div>
+        <div class="terminal-line" data-delay="3800">
+          <span class="text-dark-400">&nbsp;</span>
+        </div>
+        <div class="terminal-line" data-delay="4000">
+          <span class="text-orange-400 font-semibold">&#9888; HIGH:</span>
+          <span class="text-dark-100 ml-2">Overprivileged file system access</span>
+        </div>
+        <div class="terminal-line pl-6" data-delay="4200">
+          <span class="text-dark-400">&#8627; Server "filesystem" has write access to /</span>
+        </div>
+        <div class="terminal-line" data-delay="4600">
+          <span class="text-dark-400">&nbsp;</span>
+        </div>
+        <div class="terminal-line" data-delay="4900">
+          <span class="text-yellow-400 font-semibold">&#9888; MEDIUM:</span>
+          <span class="text-dark-100 ml-2">Missing rate limiting on API calls</span>
+        </div>
+        <div class="terminal-line" data-delay="5400">
+          <span class="text-dark-400">&nbsp;</span>
+        </div>
+        <div class="terminal-line" data-delay="5700">
+          <span class="text-dark-300">&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+        </div>
+        <div class="terminal-line" data-delay="6000">
+          <span class="text-green-400">&#10004;</span>
+          <span class="text-dark-100 ml-2">Scan complete:</span>
+          <span class="text-red-400 ml-2">1 critical</span>
+          <span class="text-dark-400">,</span>
+          <span class="text-orange-400 ml-1">1 high</span>
+          <span class="text-dark-400">,</span>
+          <span class="text-yellow-400 ml-1">1 medium</span>
+        </div>
+        <div class="terminal-line" data-delay="6300">
+          <span class="text-dark-400">&nbsp;</span>
+        </div>
+        <div class="terminal-line" data-delay="6500">
+          <span class="text-dark-400">Run</span>
+          <span class="text-primary-400 ml-1">secureagent report</span>
+          <span class="text-dark-400 ml-1">for detailed remediation steps</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Caption -->
+    <p class="text-center text-dark-400 text-sm mt-6">
+      Detect vulnerabilities in your AI agent configurations in seconds
+    </p>
+  </div>
+</section>
+
+<script>
+  // Animate terminal lines on scroll into view
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const lines = entry.target.querySelectorAll('.terminal-line');
+        lines.forEach((line) => {
+          const delay = parseInt((line as HTMLElement).dataset.delay || '0', 10);
+          setTimeout(() => {
+            line.classList.add('visible');
+          }, delay);
+        });
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  const terminal = document.getElementById('terminal-output');
+  if (terminal) {
+    observer.observe(terminal);
+  }
+</script>
+
+<style>
+  .terminal-line {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .terminal-line.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .terminal-body {
+    line-height: 1.8;
+  }
+</style>
