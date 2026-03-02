@@ -523,12 +523,13 @@ def tune_hyperparameters(
         trainer = ModelTrainer()
         results = trainer.tune_hyperparameters(findings, cv_folds=folds)
 
-        # Display results
-        console.print("\n[bold]Best Parameters:[/bold]")
-        for param, value in results["best_params"].items():
-            console.print(f"  {param}: {value}")
-
-        console.print(f"\n[bold]Best Score:[/bold] {results['best_score']:.4f}")
+        # Display results per model
+        for model_name, model_results in results.items():
+            console.print(f"\n[bold]{model_name}:[/bold]")
+            console.print(f"  Best Score: {model_results['best_score']:.4f}")
+            console.print(f"  Best Parameters:")
+            for param, value in model_results["best_params"].items():
+                console.print(f"    {param}: {value}")
 
     except Exception as e:
         console.print(f"[red]Tuning failed: {e}[/red]")

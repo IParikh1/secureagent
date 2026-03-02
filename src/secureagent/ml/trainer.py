@@ -755,30 +755,58 @@ class ModelTrainer:
         findings: List[Finding],
         folds: int = 5,
     ) -> Dict[str, float]:
-        """Perform cross-validation."""
+        """Perform cross-validation using the actual ensemble model.
+
+        Uses KFold to train an EnsembleModel on each fold, collecting
+        predictions and computing metrics that reflect the production
+        model architecture (RF + GradientBoosting + LogisticRegression).
+        """
         self._ensure_deps()
         np = self._np
 
-        from sklearn.model_selection import cross_val_score
-        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.model_selection import KFold
+        from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
         X, y, feature_names = self.prepare_data(findings)
 
-        model = RandomForestClassifier(n_estimators=100, random_state=42)
+        kf = KFold(n_splits=folds, shuffle=True, random_state=42)
 
-        scores = {
-            "accuracy": cross_val_score(model, X, y, cv=folds, scoring="accuracy"),
-            "f1": cross_val_score(model, X, y, cv=folds, scoring="f1_weighted"),
-            "roc_auc": cross_val_score(model, X, y, cv=folds, scoring="roc_auc"),
-        }
+        accuracy_scores = []
+        f1_scores = []
+        roc_auc_scores = []
+
+        for train_idx, val_idx in kf.split(X):
+            X_train, X_val = X[train_idx], X[val_idx]
+            y_train, y_val = y[train_idx], y[val_idx]
+
+            # Train ensemble model on this fold
+            model = EnsembleModel()
+            model.fit(X_train, y_train, feature_names)
+
+            # Get predictions
+            y_pred = []
+            y_proba = []
+            for x in X_val:
+                features_dict = dict(zip(feature_names, x))
+                pred = model.predict(features_dict)
+                y_pred.append(1 if pred.risk_score >= 0.5 else 0)
+                y_proba.append(pred.risk_score)
+
+            y_pred = np.array(y_pred)
+            y_proba = np.array(y_proba)
+
+            accuracy_scores.append(accuracy_score(y_val, y_pred))
+            f1_scores.append(f1_score(y_val, y_pred, average="weighted"))
+            if len(np.unique(y_val)) > 1:
+                roc_auc_scores.append(roc_auc_score(y_val, y_proba))
 
         return {
-            "accuracy_mean": float(np.mean(scores["accuracy"])),
-            "accuracy_std": float(np.std(scores["accuracy"])),
-            "f1_mean": float(np.mean(scores["f1"])),
-            "f1_std": float(np.std(scores["f1"])),
-            "roc_auc_mean": float(np.mean(scores["roc_auc"])),
-            "roc_auc_std": float(np.std(scores["roc_auc"])),
+            "accuracy_mean": float(np.mean(accuracy_scores)),
+            "accuracy_std": float(np.std(accuracy_scores)),
+            "f1_mean": float(np.mean(f1_scores)),
+            "f1_std": float(np.std(f1_scores)),
+            "roc_auc_mean": float(np.mean(roc_auc_scores)) if roc_auc_scores else 0.0,
+            "roc_auc_std": float(np.std(roc_auc_scores)) if roc_auc_scores else 0.0,
         }
 
     def generate_training_data(
@@ -954,63 +982,93 @@ class ModelTrainer:
     def tune_hyperparameters(
         self,
         findings: List[Finding],
-        param_grid: Optional[Dict[str, List[Any]]] = None,
+        param_grids: Optional[Dict[str, Dict[str, List[Any]]]] = None,
         cv_folds: int = 5,
     ) -> Dict[str, Any]:
-        """Tune model hyperparameters using grid search.
+        """Tune hyperparameters for each model in the ensemble separately.
+
+        Runs GridSearchCV for RandomForest, GradientBoosting, and
+        LogisticRegression with their respective parameter grids.
 
         Args:
             findings: Training findings
-            param_grid: Parameter grid (uses default if None)
+            param_grids: Dict of model_name -> param_grid (uses defaults if None)
             cv_folds: Number of cross-validation folds
 
         Returns:
-            Dictionary with best parameters and scores
+            Dictionary with best parameters per model and scores
         """
         self._ensure_deps()
         np = self._np
 
         from sklearn.model_selection import GridSearchCV
-        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+        from sklearn.linear_model import LogisticRegression
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.pipeline import Pipeline
 
         # Prepare data
         X, y, feature_names = self.prepare_data(findings)
 
-        # Default parameter grid
-        if param_grid is None:
-            param_grid = {
-                "n_estimators": [50, 100, 200],
-                "max_depth": [5, 10, 15, None],
-                "min_samples_split": [2, 5, 10],
-                "min_samples_leaf": [1, 2, 4],
+        # Default parameter grids per model
+        if param_grids is None:
+            param_grids = {
+                "random_forest": {
+                    "model__n_estimators": [50, 100, 200],
+                    "model__max_depth": [5, 10, 15],
+                    "model__min_samples_split": [2, 5, 10],
+                },
+                "gradient_boosting": {
+                    "model__n_estimators": [50, 100, 200],
+                    "model__max_depth": [3, 5, 7],
+                    "model__learning_rate": [0.01, 0.1, 0.2],
+                },
+                "logistic_regression": {
+                    "model__C": [0.1, 1.0, 10.0],
+                    "model__max_iter": [500, 1000],
+                },
             }
 
-        # Grid search
-        model = RandomForestClassifier(random_state=42)
-        grid_search = GridSearchCV(
-            model,
-            param_grid,
-            cv=cv_folds,
-            scoring="f1_weighted",
-            n_jobs=-1,
-            verbose=1,
-        )
-
-        logger.info("Starting hyperparameter tuning...")
-        grid_search.fit(X, y)
-
-        logger.info(f"Best parameters: {grid_search.best_params_}")
-        logger.info(f"Best score: {grid_search.best_score_:.4f}")
-
-        return {
-            "best_params": grid_search.best_params_,
-            "best_score": float(grid_search.best_score_),
-            "cv_results": {
-                "mean_test_score": grid_search.cv_results_["mean_test_score"].tolist(),
-                "std_test_score": grid_search.cv_results_["std_test_score"].tolist(),
-                "params": grid_search.cv_results_["params"],
-            },
+        models = {
+            "random_forest": RandomForestClassifier(random_state=42),
+            "gradient_boosting": GradientBoostingClassifier(random_state=42),
+            "logistic_regression": LogisticRegression(random_state=42),
         }
+
+        results = {}
+        for model_name, model in models.items():
+            if model_name not in param_grids:
+                continue
+
+            pipeline = Pipeline([
+                ("scaler", StandardScaler()),
+                ("model", model),
+            ])
+
+            grid_search = GridSearchCV(
+                pipeline,
+                param_grids[model_name],
+                cv=cv_folds,
+                scoring="f1_weighted",
+                n_jobs=-1,
+            )
+
+            logger.info(f"Tuning {model_name}...")
+            grid_search.fit(X, y)
+
+            # Strip 'model__' prefix from param names for cleaner output
+            best_params = {
+                k.replace("model__", ""): v
+                for k, v in grid_search.best_params_.items()
+            }
+
+            results[model_name] = {
+                "best_params": best_params,
+                "best_score": float(grid_search.best_score_),
+            }
+            logger.info(f"{model_name} best params: {best_params}, score: {grid_search.best_score_:.4f}")
+
+        return results
 
     def export_model_info(self, output_path: Optional[Path] = None) -> Dict[str, Any]:
         """Export model information for documentation.
