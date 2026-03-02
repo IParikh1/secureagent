@@ -23,10 +23,7 @@ class ModelType(str, Enum):
 
 class RetrainingStrategy(str, Enum):
     """Strategies for model retraining."""
-    TRANSFER_LEARNING = "transfer_learning"  # Fine-tune baseline on new data
-    FEEDBACK_LOOP = "feedback_loop"  # Learn from user accept/dismiss
     FULL_RETRAIN = "full_retrain"  # Train from scratch on client data
-    ACTIVE_LEARNING = "active_learning"  # Model requests labels for uncertain samples
     ENSEMBLE_BLEND = "ensemble_blend"  # Combine baseline with custom model
 
 
@@ -95,14 +92,8 @@ class RetrainingConfig:
     validation_split: float = 0.2
     include_baseline_data: bool = True  # Mix with baseline training data
 
-    # Training parameters
-    learning_rate: Optional[float] = None
-    epochs: Optional[int] = None
-    early_stopping: bool = True
-
-    # Fine-tuning specific
-    freeze_layers: Optional[int] = None  # For transfer learning
-    blend_weight: float = 0.5  # For ensemble blending (0=baseline, 1=custom)
+    # Ensemble blending (0=full baseline, 1=full custom)
+    blend_weight: float = 0.5
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -112,40 +103,13 @@ class RetrainingConfig:
             "min_samples": self.min_samples,
             "validation_split": self.validation_split,
             "include_baseline_data": self.include_baseline_data,
-            "learning_rate": self.learning_rate,
-            "epochs": self.epochs,
-            "early_stopping": self.early_stopping,
-            "freeze_layers": self.freeze_layers,
             "blend_weight": self.blend_weight,
         }
 
 
 # Predefined retraining configurations for common use cases
 RETRAINING_PRESETS: Dict[str, RetrainingConfig] = {
-    # Industry-specific presets
-    "healthcare": RetrainingConfig(
-        strategy=RetrainingStrategy.TRANSFER_LEARNING,
-        use_case="healthcare",
-        description="Healthcare/HIPAA-focused risk scoring with emphasis on PHI protection",
-        min_samples=1000,
-        include_baseline_data=True,
-    ),
-    "finance": RetrainingConfig(
-        strategy=RetrainingStrategy.TRANSFER_LEARNING,
-        use_case="finance",
-        description="Financial services with PCI-DSS and SOX compliance focus",
-        min_samples=1000,
-        include_baseline_data=True,
-    ),
-    "government": RetrainingConfig(
-        strategy=RetrainingStrategy.TRANSFER_LEARNING,
-        use_case="government",
-        description="Government/FedRAMP compliance with strict security controls",
-        min_samples=800,
-        include_baseline_data=True,
-    ),
-
-    # Risk tolerance presets
+    # Risk tolerance presets (use blend weights to adjust scoring)
     "high_security": RetrainingConfig(
         strategy=RetrainingStrategy.ENSEMBLE_BLEND,
         use_case="high_security",
@@ -168,52 +132,13 @@ RETRAINING_PRESETS: Dict[str, RetrainingConfig] = {
         include_baseline_data=True,
     ),
 
-    # Tech stack presets
-    "aws_heavy": RetrainingConfig(
-        strategy=RetrainingStrategy.TRANSFER_LEARNING,
-        use_case="aws_heavy",
-        description="Optimized for AWS-centric infrastructure",
-        min_samples=500,
-        include_baseline_data=True,
-    ),
-    "azure_heavy": RetrainingConfig(
-        strategy=RetrainingStrategy.TRANSFER_LEARNING,
-        use_case="azure_heavy",
-        description="Optimized for Azure-centric infrastructure",
-        min_samples=500,
-        include_baseline_data=True,
-    ),
-    "multi_cloud": RetrainingConfig(
-        strategy=RetrainingStrategy.TRANSFER_LEARNING,
-        use_case="multi_cloud",
-        description="Multi-cloud environment scoring",
-        min_samples=800,
-        include_baseline_data=True,
-    ),
-
-    # Workflow presets
-    "feedback_driven": RetrainingConfig(
-        strategy=RetrainingStrategy.FEEDBACK_LOOP,
-        use_case="feedback_driven",
-        description="Learns from user accept/dismiss decisions over time",
-        min_samples=200,
-        include_baseline_data=True,
-    ),
-    "active_learning": RetrainingConfig(
-        strategy=RetrainingStrategy.ACTIVE_LEARNING,
-        use_case="active_learning",
-        description="Model requests labels for uncertain predictions",
-        min_samples=100,
-        include_baseline_data=True,
-    ),
-
-    # Custom framework presets
+    # Full retrain presets
     "custom_agents": RetrainingConfig(
         strategy=RetrainingStrategy.FULL_RETRAIN,
         use_case="custom_agents",
-        description="For organizations with proprietary agent frameworks",
+        description="Full retrain for organizations with proprietary agent frameworks",
         min_samples=1500,
-        include_baseline_data=False,  # Fully custom
+        include_baseline_data=False,
     ),
 }
 
@@ -499,21 +424,15 @@ class ModelManager:
         Returns:
             Name of recommended preset
         """
-        # Industry-specific recommendations
+        # High-security industries get stricter scoring
         if industry:
             industry_lower = industry.lower()
-            if "health" in industry_lower or "hipaa" in industry_lower:
-                return "healthcare"
-            if "financ" in industry_lower or "bank" in industry_lower:
-                return "finance"
-            if "gov" in industry_lower or "fed" in industry_lower:
-                return "government"
+            if any(kw in industry_lower for kw in ["health", "hipaa", "financ", "bank", "gov", "fed"]):
+                return "high_security"
 
-        # Sample count recommendations
-        if sample_count < 200:
-            return "active_learning"
+        # Low sample counts should use balanced blend
         if sample_count < 500:
-            return "feedback_driven"
+            return "balanced"
 
         # Default
         return "balanced"
