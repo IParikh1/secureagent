@@ -81,7 +81,7 @@ class AgentFeatureExtractor(FeatureExtractor):
 
         # Check for prompt injection risks
         prompt_patterns = ["prompt", "injection", "jailbreak", "input"]
-        if all(any(p in text for p in [prompt_patterns[0], prompt_patterns[1]])):
+        if prompt_patterns[0] in text and prompt_patterns[1] in text:
             features["agent_prompt_injection"] = 1.0
 
         # Check for excessive agency

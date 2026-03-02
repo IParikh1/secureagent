@@ -1,49 +1,111 @@
 {
-  "version": "v1.0.0_20251225",
-  "created_at": "2025-12-25T21:23:06.380639",
-  "model_type": "Random Forest Ensemble",
-  "training_samples": 5000,
-  "test_samples": 1000,
-  "features": 31,
+  "version": "v2.0.0_20260302",
+  "created_at": "2026-03-02T11:36:15.653761",
+  "model_type": "Ensemble (RandomForest + GradientBoosting + LogisticRegression)",
+  "training_samples": 2000,
+  "test_samples": 400,
+  "features": 41,
+  "feature_names": [
+    "is_mcp_finding",
+    "mcp_credential_risk",
+    "mcp_injection_risk",
+    "mcp_traversal_risk",
+    "mcp_ssrf_risk",
+    "mcp_auth_risk",
+    "mcp_permission_risk",
+    "mcp_high_risk_tool",
+    "mcp_sensitive_env",
+    "mcp_server_count",
+    "mcp_tool_count",
+    "is_cloud_finding",
+    "is_aws",
+    "is_azure",
+    "is_terraform",
+    "cloud_s3_risk",
+    "cloud_iam_risk",
+    "cloud_ec2_risk",
+    "cloud_rds_risk",
+    "cloud_lambda_risk",
+    "cloud_kms_risk",
+    "cloud_high_risk_pattern",
+    "cloud_exposure_risk",
+    "cloud_encryption_issue",
+    "cloud_permission_issue",
+    "is_agent_finding",
+    "is_langchain",
+    "is_openai_assistant",
+    "is_autogpt_crewai",
+    "agent_dangerous_capability",
+    "agent_high_autonomy",
+    "agent_memory_risk",
+    "agent_delegation_risk",
+    "agent_external_access",
+    "agent_prompt_injection",
+    "agent_excessive_agency",
+    "agent_tool_count",
+    "severity_score",
+    "has_remediation",
+    "has_cwe",
+    "has_owasp"
+  ],
   "classes": [
-    "critical",
-    "high",
-    "medium",
-    "low",
-    "minimal"
+    "low_risk",
+    "high_risk"
   ],
   "metrics": {
-    "accuracy": 0.932,
-    "precision": 0.9321,
-    "recall": 0.932,
-    "f1_score": 0.9318,
-    "cv_mean": 0.8781,
-    "cv_std": 0.0446
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "auc_roc": 1.0
   },
   "feature_importance": {
-    "mcp02_privilege_escalation_score": 0.1354,
-    "num_dangerous_tools": 0.0945,
-    "mcp03_tool_poisoning_score": 0.0806,
-    "mcp07_auth_weakness_score": 0.0764,
-    "config_complexity": 0.0598,
-    "num_exec_tools": 0.0538,
-    "uses_env_references": 0.0481,
-    "mcp06_prompt_injection_score": 0.0446,
-    "mcp05_command_injection_score": 0.0442,
-    "mcp01_token_exposure_score": 0.0393
+    "severity_score": 0.8651,
+    "agent_dangerous_capability": 0.0228,
+    "agent_external_access": 0.0127,
+    "mcp_sensitive_env": 0.0105,
+    "cloud_high_risk_pattern": 0.0084,
+    "mcp_traversal_risk": 0.0084,
+    "agent_high_autonomy": 0.0083,
+    "cloud_rds_risk": 0.0067,
+    "is_mcp_finding": 0.0053,
+    "agent_memory_risk": 0.005,
+    "is_cloud_finding": 0.0045,
+    "is_aws": 0.0042,
+    "mcp_permission_risk": 0.0038,
+    "cloud_kms_risk": 0.003,
+    "cloud_permission_issue": 0.0026,
+    "cloud_s3_risk": 0.0026,
+    "agent_prompt_injection": 0.0026,
+    "is_autogpt_crewai": 0.0025,
+    "agent_excessive_agency": 0.0022,
+    "is_azure": 0.0022
   },
   "hyperparameters": {
     "random_forest": {
-      "n_estimators": 200,
-      "max_depth": 15,
-      "min_samples_split": 5,
-      "min_samples_leaf": 2,
-      "max_features": "sqrt",
-      "class_weight": "balanced"
-    },
-    "isolation_forest": {
       "n_estimators": 100,
-      "contamination": 0.1
-    }
-  }
+      "max_depth": 10,
+      "random_state": 42
+    },
+    "gradient_boosting": {
+      "n_estimators": 100,
+      "max_depth": 5,
+      "random_state": 42
+    },
+    "logistic_regression": {
+      "max_iter": 1000,
+      "random_state": 42
+    },
+    "scaler": "StandardScaler",
+    "ensemble_method": "average_predict_proba"
+  },
+  "training_domains": [
+    "autogpt",
+    "aws",
+    "azure",
+    "langchain",
+    "mcp",
+    "openai",
+    "terraform"
+  ]
 }
