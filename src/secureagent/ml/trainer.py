@@ -205,6 +205,280 @@ class SyntheticDataGenerator:
         },
     ]
 
+    AZURE_TEMPLATES = [
+        {
+            "rule_id": "AZURE-STORAGE-001",
+            "title": "Public Storage Container",
+            "description": "Azure storage container '{container}' allows public access",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": ["data-container", "backup-container", "uploads-container", "assets-container"],
+        },
+        {
+            "rule_id": "AZURE-STORAGE-002",
+            "title": "Missing Encryption at Rest",
+            "description": "Azure storage account '{account}' missing encryption at rest",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": ["storageaccount01", "proddata", "logstorage", "archivestore"],
+        },
+        {
+            "rule_id": "AZURE-STORAGE-003",
+            "title": "Missing Network Restrictions",
+            "description": "Azure storage account has no network restrictions configured",
+            "severity": Severity.MEDIUM,
+            "risk": 0,
+            "variations": [],
+        },
+        {
+            "rule_id": "AZURE-STORAGE-004",
+            "title": "Missing Access Logging",
+            "description": "Azure storage account '{account}' does not have access logging enabled",
+            "severity": Severity.LOW,
+            "risk": 0,
+            "variations": ["storageaccount01", "proddata", "logstorage"],
+        },
+    ]
+
+    TERRAFORM_TEMPLATES = [
+        {
+            "rule_id": "TF-SG-001",
+            "title": "Open Security Group",
+            "description": "Security group allows unrestricted access from {cidr}",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": ["0.0.0.0/0", "::/0", "any source"],
+        },
+        {
+            "rule_id": "TF-S3-001",
+            "title": "Public S3 Bucket in Terraform",
+            "description": "Terraform creates S3 bucket '{bucket}' with public access",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": ["data-bucket", "public-assets", "web-bucket"],
+        },
+        {
+            "rule_id": "TF-RDS-001",
+            "title": "Unencrypted RDS Instance",
+            "description": "RDS instance '{instance}' does not have storage encryption enabled",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": ["prod-db", "main-database", "analytics-rds"],
+        },
+        {
+            "rule_id": "TF-EC2-001",
+            "title": "Unencrypted EBS Volume",
+            "description": "EBS volume attached to instance has no encryption",
+            "severity": Severity.MEDIUM,
+            "risk": 0,
+            "variations": [],
+        },
+        {
+            "rule_id": "TF-RDS-002",
+            "title": "Public RDS Instance",
+            "description": "RDS instance is publicly accessible",
+            "severity": Severity.MEDIUM,
+            "risk": 0,
+            "variations": [],
+        },
+    ]
+
+    OPENAI_TEMPLATES = [
+        {
+            "rule_id": "OAI-001",
+            "title": "Hardcoded API Key",
+            "description": "OpenAI API key hardcoded in {location}",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": ["assistant configuration", "source code", "environment file", "config.json"],
+        },
+        {
+            "rule_id": "OAI-002",
+            "title": "Code Interpreter Without Restrictions",
+            "description": "OpenAI Assistant has code_interpreter enabled without execution restrictions",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": [],
+        },
+        {
+            "rule_id": "OAI-003",
+            "title": "File Search With Sensitive Data",
+            "description": "OpenAI Assistant file_search tool has access to {data_type}",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": ["sensitive documents", "PII data files", "internal reports", "credentials files"],
+        },
+        {
+            "rule_id": "OAI-004",
+            "title": "Dangerous Function Definition",
+            "description": "OpenAI Assistant defines dangerous function: {function}",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": ["execute_shell_command", "run_system_command", "delete_files", "modify_permissions"],
+        },
+        {
+            "rule_id": "OAI-005",
+            "title": "Missing Assistant Guardrails",
+            "description": "OpenAI Assistant has no instruction guardrails configured",
+            "severity": Severity.MEDIUM,
+            "risk": 0,
+            "variations": [],
+        },
+    ]
+
+    AUTOGPT_TEMPLATES = [
+        {
+            "rule_id": "AG-001",
+            "title": "Hardcoded API Keys in Agent Config",
+            "description": "API keys hardcoded in {framework} agent configuration",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": ["AutoGPT", "CrewAI", "autonomous agent"],
+        },
+        {
+            "rule_id": "AG-002",
+            "title": "Unrestricted Agent Autonomy",
+            "description": "Agent has unrestricted autonomy with no human-in-the-loop controls",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": [],
+        },
+        {
+            "rule_id": "AG-003",
+            "title": "Dangerous Tool Access",
+            "description": "Agent has access to dangerous tool: {tool}",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": ["shell_executor", "file_system_write", "code_execution", "system_admin"],
+        },
+        {
+            "rule_id": "AG-004",
+            "title": "Inter-Agent Trust Without Verification",
+            "description": "Agent trusts other agents without verification or authentication",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": [],
+        },
+        {
+            "rule_id": "AG-005",
+            "title": "No Memory Limits Configured",
+            "description": "Agent has no memory limits configured for {memory_type}",
+            "severity": Severity.MEDIUM,
+            "risk": 0,
+            "variations": ["context window", "vector store", "conversation history"],
+        },
+        {
+            "rule_id": "AG-006",
+            "title": "Unconstrained Task Delegation",
+            "description": "Agent can delegate tasks without scope restrictions",
+            "severity": Severity.MEDIUM,
+            "risk": 0,
+            "variations": [],
+        },
+        {
+            "rule_id": "AG-009",
+            "title": "No Iteration Limits",
+            "description": "Agent has no iteration or recursion limits configured",
+            "severity": Severity.LOW,
+            "risk": 0,
+            "variations": [],
+        },
+    ]
+
+    MULTIAGENT_TEMPLATES = [
+        {
+            "rule_id": "MA-ORCH-001",
+            "title": "Workflow Cycle Detected",
+            "description": "Orchestration workflow contains a cycle that could cause infinite loops",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": [],
+        },
+        {
+            "rule_id": "MA-ORCH-003",
+            "title": "Privilege Escalation Path",
+            "description": "Privilege escalation path detected in orchestration from {source} to {target}",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": [("reader agent", "admin agent"), ("worker", "orchestrator"), ("guest", "system")],
+        },
+        {
+            "rule_id": "MA-COMM-001",
+            "title": "Unencrypted Agent Communication",
+            "description": "Agent communication channel uses unencrypted transport",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": [],
+        },
+        {
+            "rule_id": "MA-COMM-003",
+            "title": "Message Injection Vulnerability",
+            "description": "Agent messaging system vulnerable to message injection attacks",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": [],
+        },
+        {
+            "rule_id": "MA-DEL-001",
+            "title": "Circular Delegation Chain",
+            "description": "Circular delegation chain detected between agents",
+            "severity": Severity.MEDIUM,
+            "risk": 0,
+            "variations": [],
+        },
+        {
+            "rule_id": "MA-DEL-003",
+            "title": "Unauthorized Delegation",
+            "description": "Agent delegates tasks to unauthorized recipient agents",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": [],
+        },
+    ]
+
+    RAG_TEMPLATES = [
+        {
+            "rule_id": "RAG-VS-001",
+            "title": "Vector Store No Access Controls",
+            "description": "Vector store '{store}' has no access controls configured",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": ["main-index", "document-store", "knowledge-base", "embeddings-db"],
+        },
+        {
+            "rule_id": "RAG-VS-003",
+            "title": "Vector Store Network Exposure",
+            "description": "Vector store is exposed to network without authentication",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": [],
+        },
+        {
+            "rule_id": "RAG-DOC-001",
+            "title": "Malicious Document Ingestion",
+            "description": "RAG pipeline ingests documents without validation or sanitization",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": [],
+        },
+        {
+            "rule_id": "RAG-POISON-001",
+            "title": "Knowledge Base Poisoning",
+            "description": "Knowledge base poisoning detected via {vector}",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": ["adversarial embeddings", "corrupted documents", "injected content"],
+        },
+        {
+            "rule_id": "RAG-VS-005",
+            "title": "Missing Vector Store Encryption",
+            "description": "Vector store data is not encrypted at rest",
+            "severity": Severity.MEDIUM,
+            "risk": 0,
+            "variations": [],
+        },
+    ]
+
     def __init__(self, seed: int = 42):
         """Initialize with random seed for reproducibility."""
         self.seed = seed
@@ -237,6 +511,18 @@ class SyntheticDataGenerator:
             templates.extend([(t, FindingDomain.AWS) for t in self.AWS_TEMPLATES])
         if domains is None or "langchain" in domains:
             templates.extend([(t, FindingDomain.LANGCHAIN) for t in self.LANGCHAIN_TEMPLATES])
+        if domains is None or "azure" in domains:
+            templates.extend([(t, FindingDomain.AZURE) for t in self.AZURE_TEMPLATES])
+        if domains is None or "terraform" in domains:
+            templates.extend([(t, FindingDomain.TERRAFORM) for t in self.TERRAFORM_TEMPLATES])
+        if domains is None or "openai" in domains:
+            templates.extend([(t, FindingDomain.OPENAI) for t in self.OPENAI_TEMPLATES])
+        if domains is None or "autogpt" in domains:
+            templates.extend([(t, FindingDomain.AUTOGPT) for t in self.AUTOGPT_TEMPLATES])
+        if domains is None or "multiagent" in domains:
+            templates.extend([(t, FindingDomain.MCP) for t in self.MULTIAGENT_TEMPLATES])
+        if domains is None or "rag" in domains:
+            templates.extend([(t, FindingDomain.MCP) for t in self.RAG_TEMPLATES])
 
         if not templates:
             return [], []
