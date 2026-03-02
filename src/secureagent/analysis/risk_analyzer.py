@@ -96,15 +96,29 @@ RISK_WEIGHTS: Dict[RiskFactor, Tuple[float, str]] = {
 class RiskAnalyzer:
     """Analyzes overall risk for AI agents."""
 
-    def __init__(self):
-        """Initialize the analyzer."""
-        self._reports: Dict[str, RiskReport] = {}
+    def __init__(self, risk_scorer=None):
+        """Initialize the analyzer.
 
-    def analyze(self, agent: AgentInventoryItem) -> RiskReport:
+        Args:
+            risk_scorer: Optional RiskScorer instance for ML-enhanced scoring.
+                         When provided, finding-level ML scores are factored
+                         into the agent risk assessment.
+        """
+        self._reports: Dict[str, RiskReport] = {}
+        self._risk_scorer = risk_scorer
+
+    def analyze(
+        self,
+        agent: AgentInventoryItem,
+        findings: Optional[List[Finding]] = None,
+    ) -> RiskReport:
         """Perform comprehensive risk analysis on an agent.
 
         Args:
             agent: Agent to analyze
+            findings: Optional list of security findings for this agent.
+                      When provided with a risk_scorer, ML-derived scores
+                      are factored into the overall assessment.
 
         Returns:
             RiskReport with analysis results
@@ -132,6 +146,10 @@ class RiskAnalyzer:
 
         # Calculate overall score
         self._calculate_overall_score(report)
+
+        # Incorporate ML scoring from findings if available
+        if self._risk_scorer and findings:
+            self._incorporate_ml_scores(report, findings)
 
         # Estimate blast radius
         report.blast_radius = self._estimate_blast_radius(agent, report)
@@ -454,6 +472,47 @@ class RiskAnalyzer:
             )
         )
 
+    def _incorporate_ml_scores(
+        self, report: RiskReport, findings: List[Finding]
+    ) -> None:
+        """Incorporate ML-derived finding scores into the agent risk assessment.
+
+        Blends the heuristic agent-level score with the ML finding-level score
+        using a 70/30 weight (heuristic/ML) to enhance the assessment without
+        overriding the structural analysis.
+        """
+        try:
+            assessment = self._risk_scorer.score_findings(findings)
+            ml_score = assessment.overall_score
+
+            # Blend: 70% heuristic (agent-level) + 30% ML (finding-level)
+            heuristic_score = report.overall_risk_score
+            report.overall_risk_score = min(
+                1.0, heuristic_score * 0.7 + ml_score * 0.3
+            )
+
+            # Recalculate risk level
+            if report.overall_risk_score >= 0.8:
+                report.risk_level = Severity.CRITICAL
+            elif report.overall_risk_score >= 0.6:
+                report.risk_level = Severity.HIGH
+            elif report.overall_risk_score >= 0.4:
+                report.risk_level = Severity.MEDIUM
+            elif report.overall_risk_score >= 0.2:
+                report.risk_level = Severity.LOW
+            else:
+                report.risk_level = Severity.INFO
+
+            # Add ML risk factors to the report
+            for factor in assessment.risk_factors:
+                report.key_risks.append(
+                    f"[ML] {factor.get('category', 'Unknown')}: "
+                    f"{factor.get('finding_count', 0)} finding(s)"
+                )
+
+        except Exception:
+            pass  # ML scoring failure should not break heuristic analysis
+
     def _calculate_overall_score(self, report: RiskReport) -> None:
         """Calculate overall risk score."""
         present_factors = [f for f in report.factor_assessments if f.present]
@@ -539,17 +598,26 @@ class RiskAnalyzer:
         return recommendations
 
     def analyze_multiple(
-        self, agents: List[AgentInventoryItem]
+        self,
+        agents: List[AgentInventoryItem],
+        findings_by_agent: Optional[Dict[str, List[Finding]]] = None,
     ) -> Dict[str, RiskReport]:
         """Analyze multiple agents.
 
         Args:
             agents: List of agents
+            findings_by_agent: Optional dict mapping agent IDs to their findings
 
         Returns:
             Dictionary mapping agent IDs to reports
         """
-        return {agent.id: self.analyze(agent) for agent in agents}
+        results = {}
+        for agent in agents:
+            agent_findings = (
+                findings_by_agent.get(agent.id) if findings_by_agent else None
+            )
+            results[agent.id] = self.analyze(agent, findings=agent_findings)
+        return results
 
     def get_high_risk_agents(
         self, agents: List[AgentInventoryItem], threshold: float = 0.6
