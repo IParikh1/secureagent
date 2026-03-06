@@ -205,6 +205,280 @@ class SyntheticDataGenerator:
         },
     ]
 
+    AZURE_TEMPLATES = [
+        {
+            "rule_id": "AZURE-STORAGE-001",
+            "title": "Public Storage Container",
+            "description": "Azure storage container '{container}' allows public access",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": ["data-container", "backup-container", "uploads-container", "assets-container"],
+        },
+        {
+            "rule_id": "AZURE-STORAGE-002",
+            "title": "Missing Encryption at Rest",
+            "description": "Azure storage account '{account}' missing encryption at rest",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": ["storageaccount01", "proddata", "logstorage", "archivestore"],
+        },
+        {
+            "rule_id": "AZURE-STORAGE-003",
+            "title": "Missing Network Restrictions",
+            "description": "Azure storage account has no network restrictions configured",
+            "severity": Severity.MEDIUM,
+            "risk": 0,
+            "variations": [],
+        },
+        {
+            "rule_id": "AZURE-STORAGE-004",
+            "title": "Missing Access Logging",
+            "description": "Azure storage account '{account}' does not have access logging enabled",
+            "severity": Severity.LOW,
+            "risk": 0,
+            "variations": ["storageaccount01", "proddata", "logstorage"],
+        },
+    ]
+
+    TERRAFORM_TEMPLATES = [
+        {
+            "rule_id": "TF-SG-001",
+            "title": "Open Security Group",
+            "description": "Security group allows unrestricted access from {cidr}",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": ["0.0.0.0/0", "::/0", "any source"],
+        },
+        {
+            "rule_id": "TF-S3-001",
+            "title": "Public S3 Bucket in Terraform",
+            "description": "Terraform creates S3 bucket '{bucket}' with public access",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": ["data-bucket", "public-assets", "web-bucket"],
+        },
+        {
+            "rule_id": "TF-RDS-001",
+            "title": "Unencrypted RDS Instance",
+            "description": "RDS instance '{instance}' does not have storage encryption enabled",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": ["prod-db", "main-database", "analytics-rds"],
+        },
+        {
+            "rule_id": "TF-EC2-001",
+            "title": "Unencrypted EBS Volume",
+            "description": "EBS volume attached to instance has no encryption",
+            "severity": Severity.MEDIUM,
+            "risk": 0,
+            "variations": [],
+        },
+        {
+            "rule_id": "TF-RDS-002",
+            "title": "Public RDS Instance",
+            "description": "RDS instance is publicly accessible",
+            "severity": Severity.MEDIUM,
+            "risk": 0,
+            "variations": [],
+        },
+    ]
+
+    OPENAI_TEMPLATES = [
+        {
+            "rule_id": "OAI-001",
+            "title": "Hardcoded API Key",
+            "description": "OpenAI API key hardcoded in {location}",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": ["assistant configuration", "source code", "environment file", "config.json"],
+        },
+        {
+            "rule_id": "OAI-002",
+            "title": "Code Interpreter Without Restrictions",
+            "description": "OpenAI Assistant has code_interpreter enabled without execution restrictions",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": [],
+        },
+        {
+            "rule_id": "OAI-003",
+            "title": "File Search With Sensitive Data",
+            "description": "OpenAI Assistant file_search tool has access to {data_type}",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": ["sensitive documents", "PII data files", "internal reports", "credentials files"],
+        },
+        {
+            "rule_id": "OAI-004",
+            "title": "Dangerous Function Definition",
+            "description": "OpenAI Assistant defines dangerous function: {function}",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": ["execute_shell_command", "run_system_command", "delete_files", "modify_permissions"],
+        },
+        {
+            "rule_id": "OAI-005",
+            "title": "Missing Assistant Guardrails",
+            "description": "OpenAI Assistant has no instruction guardrails configured",
+            "severity": Severity.MEDIUM,
+            "risk": 0,
+            "variations": [],
+        },
+    ]
+
+    AUTOGPT_TEMPLATES = [
+        {
+            "rule_id": "AG-001",
+            "title": "Hardcoded API Keys in Agent Config",
+            "description": "API keys hardcoded in {framework} agent configuration",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": ["AutoGPT", "CrewAI", "autonomous agent"],
+        },
+        {
+            "rule_id": "AG-002",
+            "title": "Unrestricted Agent Autonomy",
+            "description": "Agent has unrestricted autonomy with no human-in-the-loop controls",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": [],
+        },
+        {
+            "rule_id": "AG-003",
+            "title": "Dangerous Tool Access",
+            "description": "Agent has access to dangerous tool: {tool}",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": ["shell_executor", "file_system_write", "code_execution", "system_admin"],
+        },
+        {
+            "rule_id": "AG-004",
+            "title": "Inter-Agent Trust Without Verification",
+            "description": "Agent trusts other agents without verification or authentication",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": [],
+        },
+        {
+            "rule_id": "AG-005",
+            "title": "No Memory Limits Configured",
+            "description": "Agent has no memory limits configured for {memory_type}",
+            "severity": Severity.MEDIUM,
+            "risk": 0,
+            "variations": ["context window", "vector store", "conversation history"],
+        },
+        {
+            "rule_id": "AG-006",
+            "title": "Unconstrained Task Delegation",
+            "description": "Agent can delegate tasks without scope restrictions",
+            "severity": Severity.MEDIUM,
+            "risk": 0,
+            "variations": [],
+        },
+        {
+            "rule_id": "AG-009",
+            "title": "No Iteration Limits",
+            "description": "Agent has no iteration or recursion limits configured",
+            "severity": Severity.LOW,
+            "risk": 0,
+            "variations": [],
+        },
+    ]
+
+    MULTIAGENT_TEMPLATES = [
+        {
+            "rule_id": "MA-ORCH-001",
+            "title": "Workflow Cycle Detected",
+            "description": "Orchestration workflow contains a cycle that could cause infinite loops",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": [],
+        },
+        {
+            "rule_id": "MA-ORCH-003",
+            "title": "Privilege Escalation Path",
+            "description": "Privilege escalation path detected in orchestration from {source} to {target}",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": [("reader agent", "admin agent"), ("worker", "orchestrator"), ("guest", "system")],
+        },
+        {
+            "rule_id": "MA-COMM-001",
+            "title": "Unencrypted Agent Communication",
+            "description": "Agent communication channel uses unencrypted transport",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": [],
+        },
+        {
+            "rule_id": "MA-COMM-003",
+            "title": "Message Injection Vulnerability",
+            "description": "Agent messaging system vulnerable to message injection attacks",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": [],
+        },
+        {
+            "rule_id": "MA-DEL-001",
+            "title": "Circular Delegation Chain",
+            "description": "Circular delegation chain detected between agents",
+            "severity": Severity.MEDIUM,
+            "risk": 0,
+            "variations": [],
+        },
+        {
+            "rule_id": "MA-DEL-003",
+            "title": "Unauthorized Delegation",
+            "description": "Agent delegates tasks to unauthorized recipient agents",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": [],
+        },
+    ]
+
+    RAG_TEMPLATES = [
+        {
+            "rule_id": "RAG-VS-001",
+            "title": "Vector Store No Access Controls",
+            "description": "Vector store '{store}' has no access controls configured",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": ["main-index", "document-store", "knowledge-base", "embeddings-db"],
+        },
+        {
+            "rule_id": "RAG-VS-003",
+            "title": "Vector Store Network Exposure",
+            "description": "Vector store is exposed to network without authentication",
+            "severity": Severity.HIGH,
+            "risk": 1,
+            "variations": [],
+        },
+        {
+            "rule_id": "RAG-DOC-001",
+            "title": "Malicious Document Ingestion",
+            "description": "RAG pipeline ingests documents without validation or sanitization",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": [],
+        },
+        {
+            "rule_id": "RAG-POISON-001",
+            "title": "Knowledge Base Poisoning",
+            "description": "Knowledge base poisoning detected via {vector}",
+            "severity": Severity.CRITICAL,
+            "risk": 1,
+            "variations": ["adversarial embeddings", "corrupted documents", "injected content"],
+        },
+        {
+            "rule_id": "RAG-VS-005",
+            "title": "Missing Vector Store Encryption",
+            "description": "Vector store data is not encrypted at rest",
+            "severity": Severity.MEDIUM,
+            "risk": 0,
+            "variations": [],
+        },
+    ]
+
     def __init__(self, seed: int = 42):
         """Initialize with random seed for reproducibility."""
         self.seed = seed
@@ -237,6 +511,18 @@ class SyntheticDataGenerator:
             templates.extend([(t, FindingDomain.AWS) for t in self.AWS_TEMPLATES])
         if domains is None or "langchain" in domains:
             templates.extend([(t, FindingDomain.LANGCHAIN) for t in self.LANGCHAIN_TEMPLATES])
+        if domains is None or "azure" in domains:
+            templates.extend([(t, FindingDomain.AZURE) for t in self.AZURE_TEMPLATES])
+        if domains is None or "terraform" in domains:
+            templates.extend([(t, FindingDomain.TERRAFORM) for t in self.TERRAFORM_TEMPLATES])
+        if domains is None or "openai" in domains:
+            templates.extend([(t, FindingDomain.OPENAI) for t in self.OPENAI_TEMPLATES])
+        if domains is None or "autogpt" in domains:
+            templates.extend([(t, FindingDomain.AUTOGPT) for t in self.AUTOGPT_TEMPLATES])
+        if domains is None or "multiagent" in domains:
+            templates.extend([(t, FindingDomain.MCP) for t in self.MULTIAGENT_TEMPLATES])
+        if domains is None or "rag" in domains:
+            templates.extend([(t, FindingDomain.MCP) for t in self.RAG_TEMPLATES])
 
         if not templates:
             return [], []
@@ -469,30 +755,58 @@ class ModelTrainer:
         findings: List[Finding],
         folds: int = 5,
     ) -> Dict[str, float]:
-        """Perform cross-validation."""
+        """Perform cross-validation using the actual ensemble model.
+
+        Uses KFold to train an EnsembleModel on each fold, collecting
+        predictions and computing metrics that reflect the production
+        model architecture (RF + GradientBoosting + LogisticRegression).
+        """
         self._ensure_deps()
         np = self._np
 
-        from sklearn.model_selection import cross_val_score
-        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.model_selection import KFold
+        from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
         X, y, feature_names = self.prepare_data(findings)
 
-        model = RandomForestClassifier(n_estimators=100, random_state=42)
+        kf = KFold(n_splits=folds, shuffle=True, random_state=42)
 
-        scores = {
-            "accuracy": cross_val_score(model, X, y, cv=folds, scoring="accuracy"),
-            "f1": cross_val_score(model, X, y, cv=folds, scoring="f1_weighted"),
-            "roc_auc": cross_val_score(model, X, y, cv=folds, scoring="roc_auc"),
-        }
+        accuracy_scores = []
+        f1_scores = []
+        roc_auc_scores = []
+
+        for train_idx, val_idx in kf.split(X):
+            X_train, X_val = X[train_idx], X[val_idx]
+            y_train, y_val = y[train_idx], y[val_idx]
+
+            # Train ensemble model on this fold
+            model = EnsembleModel()
+            model.fit(X_train, y_train, feature_names)
+
+            # Get predictions
+            y_pred = []
+            y_proba = []
+            for x in X_val:
+                features_dict = dict(zip(feature_names, x))
+                pred = model.predict(features_dict)
+                y_pred.append(1 if pred.risk_score >= 0.5 else 0)
+                y_proba.append(pred.risk_score)
+
+            y_pred = np.array(y_pred)
+            y_proba = np.array(y_proba)
+
+            accuracy_scores.append(accuracy_score(y_val, y_pred))
+            f1_scores.append(f1_score(y_val, y_pred, average="weighted"))
+            if len(np.unique(y_val)) > 1:
+                roc_auc_scores.append(roc_auc_score(y_val, y_proba))
 
         return {
-            "accuracy_mean": float(np.mean(scores["accuracy"])),
-            "accuracy_std": float(np.std(scores["accuracy"])),
-            "f1_mean": float(np.mean(scores["f1"])),
-            "f1_std": float(np.std(scores["f1"])),
-            "roc_auc_mean": float(np.mean(scores["roc_auc"])),
-            "roc_auc_std": float(np.std(scores["roc_auc"])),
+            "accuracy_mean": float(np.mean(accuracy_scores)),
+            "accuracy_std": float(np.std(accuracy_scores)),
+            "f1_mean": float(np.mean(f1_scores)),
+            "f1_std": float(np.std(f1_scores)),
+            "roc_auc_mean": float(np.mean(roc_auc_scores)) if roc_auc_scores else 0.0,
+            "roc_auc_std": float(np.std(roc_auc_scores)) if roc_auc_scores else 0.0,
         }
 
     def generate_training_data(
@@ -668,63 +982,93 @@ class ModelTrainer:
     def tune_hyperparameters(
         self,
         findings: List[Finding],
-        param_grid: Optional[Dict[str, List[Any]]] = None,
+        param_grids: Optional[Dict[str, Dict[str, List[Any]]]] = None,
         cv_folds: int = 5,
     ) -> Dict[str, Any]:
-        """Tune model hyperparameters using grid search.
+        """Tune hyperparameters for each model in the ensemble separately.
+
+        Runs GridSearchCV for RandomForest, GradientBoosting, and
+        LogisticRegression with their respective parameter grids.
 
         Args:
             findings: Training findings
-            param_grid: Parameter grid (uses default if None)
+            param_grids: Dict of model_name -> param_grid (uses defaults if None)
             cv_folds: Number of cross-validation folds
 
         Returns:
-            Dictionary with best parameters and scores
+            Dictionary with best parameters per model and scores
         """
         self._ensure_deps()
         np = self._np
 
         from sklearn.model_selection import GridSearchCV
-        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+        from sklearn.linear_model import LogisticRegression
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.pipeline import Pipeline
 
         # Prepare data
         X, y, feature_names = self.prepare_data(findings)
 
-        # Default parameter grid
-        if param_grid is None:
-            param_grid = {
-                "n_estimators": [50, 100, 200],
-                "max_depth": [5, 10, 15, None],
-                "min_samples_split": [2, 5, 10],
-                "min_samples_leaf": [1, 2, 4],
+        # Default parameter grids per model
+        if param_grids is None:
+            param_grids = {
+                "random_forest": {
+                    "model__n_estimators": [50, 100, 200],
+                    "model__max_depth": [5, 10, 15],
+                    "model__min_samples_split": [2, 5, 10],
+                },
+                "gradient_boosting": {
+                    "model__n_estimators": [50, 100, 200],
+                    "model__max_depth": [3, 5, 7],
+                    "model__learning_rate": [0.01, 0.1, 0.2],
+                },
+                "logistic_regression": {
+                    "model__C": [0.1, 1.0, 10.0],
+                    "model__max_iter": [500, 1000],
+                },
             }
 
-        # Grid search
-        model = RandomForestClassifier(random_state=42)
-        grid_search = GridSearchCV(
-            model,
-            param_grid,
-            cv=cv_folds,
-            scoring="f1_weighted",
-            n_jobs=-1,
-            verbose=1,
-        )
-
-        logger.info("Starting hyperparameter tuning...")
-        grid_search.fit(X, y)
-
-        logger.info(f"Best parameters: {grid_search.best_params_}")
-        logger.info(f"Best score: {grid_search.best_score_:.4f}")
-
-        return {
-            "best_params": grid_search.best_params_,
-            "best_score": float(grid_search.best_score_),
-            "cv_results": {
-                "mean_test_score": grid_search.cv_results_["mean_test_score"].tolist(),
-                "std_test_score": grid_search.cv_results_["std_test_score"].tolist(),
-                "params": grid_search.cv_results_["params"],
-            },
+        models = {
+            "random_forest": RandomForestClassifier(random_state=42),
+            "gradient_boosting": GradientBoostingClassifier(random_state=42),
+            "logistic_regression": LogisticRegression(random_state=42),
         }
+
+        results = {}
+        for model_name, model in models.items():
+            if model_name not in param_grids:
+                continue
+
+            pipeline = Pipeline([
+                ("scaler", StandardScaler()),
+                ("model", model),
+            ])
+
+            grid_search = GridSearchCV(
+                pipeline,
+                param_grids[model_name],
+                cv=cv_folds,
+                scoring="f1_weighted",
+                n_jobs=-1,
+            )
+
+            logger.info(f"Tuning {model_name}...")
+            grid_search.fit(X, y)
+
+            # Strip 'model__' prefix from param names for cleaner output
+            best_params = {
+                k.replace("model__", ""): v
+                for k, v in grid_search.best_params_.items()
+            }
+
+            results[model_name] = {
+                "best_params": best_params,
+                "best_score": float(grid_search.best_score_),
+            }
+            logger.info(f"{model_name} best params: {best_params}, score: {grid_search.best_score_:.4f}")
+
+        return results
 
     def export_model_info(self, output_path: Optional[Path] = None) -> Dict[str, Any]:
         """Export model information for documentation.

@@ -141,6 +141,11 @@ def scan(
         if Severity(f.severity) <= min_sev
     ]
 
+    # ML-based risk scoring
+    risk_assessment = None
+    if risk_score and filtered_findings:
+        risk_assessment = _run_risk_scoring(filtered_findings)
+
     # Create scan result
     scan_result = ScanResult(
         findings=filtered_findings,
@@ -149,7 +154,7 @@ def scan(
     )
 
     # Output results
-    _output_results(scan_result, format, output)
+    _output_results(scan_result, format, output, risk_assessment=risk_assessment)
 
     # Send alerts if requested
     if alert and filtered_findings:
@@ -166,10 +171,62 @@ def scan(
             raise typer.Exit(1)
 
 
+def _run_risk_scoring(findings: List) -> Optional["RiskAssessment"]:
+    """Run ML-based risk scoring on findings."""
+    try:
+        from secureagent.ml.risk_scorer import RiskScorer
+        from secureagent.ml.features.mcp_features import MCPFeatureExtractor
+        from secureagent.ml.features.cloud_features import CloudFeatureExtractor
+        from secureagent.ml.features.agent_features import AgentFeatureExtractor
+        from secureagent.ml.model_manager import ModelManager
+
+        # Try to load the shipped model
+        manager = ModelManager()
+        model_path = manager.get_model_path("baseline")
+
+        if model_path and model_path.exists():
+            scorer = RiskScorer(model_path=model_path, use_ml=True)
+        else:
+            scorer = RiskScorer(use_ml=False)
+            console.print("[yellow]ML model not found, using heuristic scoring[/yellow]")
+
+        # Register feature extractors
+        scorer.register_extractor(MCPFeatureExtractor())
+        scorer.register_extractor(CloudFeatureExtractor())
+        scorer.register_extractor(AgentFeatureExtractor())
+
+        # Score findings
+        assessment = scorer.score_findings(findings)
+
+        # Attach individual scores back to findings
+        for finding in findings:
+            if finding.id in assessment.finding_scores:
+                finding.risk_score = assessment.finding_scores[finding.id]
+
+        return assessment
+
+    except ImportError:
+        console.print("[yellow]ML dependencies not installed. Using heuristic scoring.[/yellow]")
+        try:
+            from secureagent.ml.risk_scorer import RiskScorer
+            scorer = RiskScorer(use_ml=False)
+            assessment = scorer.score_findings(findings)
+            for finding in findings:
+                if finding.id in assessment.finding_scores:
+                    finding.risk_score = assessment.finding_scores[finding.id]
+            return assessment
+        except Exception:
+            return None
+    except Exception as e:
+        console.print(f"[yellow]Risk scoring failed: {e}[/yellow]")
+        return None
+
+
 def _output_results(
     result: ScanResult,
     format: str,
-    output: Optional[Path]
+    output: Optional[Path],
+    risk_assessment=None,
 ) -> None:
     """Output scan results in the specified format."""
     if format == "json":
@@ -187,6 +244,14 @@ def _output_results(
             },
             "findings": [f.to_dict() for f in result.findings],
         }
+        if risk_assessment:
+            output_data["risk_assessment"] = {
+                "overall_score": risk_assessment.overall_score,
+                "risk_level": risk_assessment.risk_level,
+                "confidence": risk_assessment.confidence,
+                "risk_factors": risk_assessment.risk_factors,
+                "recommendations": risk_assessment.recommendations,
+            }
         if output:
             with open(output, "w") as f:
                 json.dump(output_data, f, indent=2)
@@ -195,7 +260,7 @@ def _output_results(
             console.print_json(data=output_data)
 
     elif format == "sarif":
-        sarif_output = _generate_sarif(result)
+        sarif_output = _generate_sarif(result, risk_assessment=risk_assessment)
         import json
         if output:
             with open(output, "w") as f:
@@ -205,10 +270,10 @@ def _output_results(
             console.print_json(data=sarif_output)
 
     else:  # console
-        _print_console_results(result)
+        _print_console_results(result, risk_assessment=risk_assessment)
 
 
-def _print_console_results(result: ScanResult) -> None:
+def _print_console_results(result: ScanResult, risk_assessment=None) -> None:
     """Print results to console with Rich formatting."""
     from rich.table import Table
     from rich.panel import Panel
@@ -239,7 +304,10 @@ def _print_console_results(result: ScanResult) -> None:
         console.print("-" * 60)
 
         for finding in findings[:10]:  # Limit to 10 per severity
-            console.print(f"\n  [bold]{finding.rule_id}[/bold]: {finding.title}")
+            risk_str = ""
+            if finding.risk_score is not None:
+                risk_str = f" [dim](risk: {finding.risk_score:.2f})[/dim]"
+            console.print(f"\n  [bold]{finding.rule_id}[/bold]: {finding.title}{risk_str}")
             console.print(f"  [dim]Location:[/dim] {finding.location.to_string()}")
             if finding.description:
                 desc = finding.description[:200] + "..." if len(finding.description) > 200 else finding.description
@@ -248,6 +316,10 @@ def _print_console_results(result: ScanResult) -> None:
 
         if len(findings) > 10:
             console.print(f"\n  [dim]... and {len(findings) - 10} more {severity.value} findings[/dim]")
+
+    # Risk assessment panel
+    if risk_assessment:
+        _print_risk_assessment(risk_assessment)
 
     # Final status
     console.print()
@@ -265,9 +337,53 @@ def _print_console_results(result: ScanResult) -> None:
         ))
 
 
-def _generate_sarif(result: ScanResult) -> dict:
+def _print_risk_assessment(assessment) -> None:
+    """Print ML risk assessment to console."""
+    from rich.table import Table
+    from rich.panel import Panel
+
+    # Risk level colors
+    level_colors = {
+        "critical": "red bold",
+        "high": "red",
+        "medium": "yellow",
+        "low": "green",
+    }
+    color = level_colors.get(assessment.risk_level, "white")
+
+    console.print()
+    console.print(Panel(
+        f"[{color}]Overall Risk Score: {assessment.overall_score:.2f} ({assessment.risk_level.upper()})[/{color}]\n"
+        f"[dim]Confidence: {assessment.confidence:.2f}[/dim]",
+        title="ML Risk Assessment",
+        border_style=color.split()[0],
+    ))
+
+    # Top risk factors
+    if assessment.risk_factors:
+        factors_table = Table(title="Top Risk Factors", show_header=True)
+        factors_table.add_column("Category", style="cyan")
+        factors_table.add_column("Findings", justify="right")
+        factors_table.add_column("Impact", style="yellow")
+
+        for factor in assessment.risk_factors[:5]:
+            factors_table.add_row(
+                factor.get("category", "Unknown"),
+                str(factor.get("finding_count", 0)),
+                factor.get("impact", "unknown"),
+            )
+        console.print(factors_table)
+
+    # Recommendations
+    if assessment.recommendations:
+        console.print("\n[bold]Recommendations:[/bold]")
+        for rec in assessment.recommendations[:5]:
+            console.print(f"  - {rec}")
+
+
+def _generate_sarif(result: ScanResult, risk_assessment=None) -> dict:
     """Generate SARIF format output."""
-    return {
+    sarif = {
         "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
         "version": "2.1.0",
         "runs": [{
@@ -276,12 +392,21 @@ def _generate_sarif(result: ScanResult) -> dict:
                     "name": "SecureAgent",
                     "version": "1.0.0",
                     "informationUri": "https://github.com/secureagent/secureagent",
-                    "rules": [],  # Would be populated with rule definitions
+                    "rules": [],
                 }
             },
             "results": [f.to_sarif_result() for f in result.findings],
         }]
     }
+    if risk_assessment:
+        sarif["runs"][0]["properties"] = {
+            "riskAssessment": {
+                "overallScore": risk_assessment.overall_score,
+                "riskLevel": risk_assessment.risk_level,
+                "confidence": risk_assessment.confidence,
+            }
+        }
+    return sarif
 
 
 def _send_alerts(findings: List) -> None:
