@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-03-06
+
+### Fixed
+
+#### ML Pipeline (from PR #18)
+- **Risk scoring wired into scan pipeline** - `--risk-score` flag was declared but never consumed; now runs `RiskScorer` with all 3 feature extractors and displays scores in console, SARIF, and JSON output
+- **Model retrained with correct features** - shipped model now uses all 41 features from `CompositeFeatureExtractor` (was 31 with wrong names)
+- **Model metadata corrected** - `model_metadata.json` now accurately reflects binary classification with RF+GB+LR ensemble (was falsely claiming 5-class RF+IsolationForest)
+- **Fixed `cross_validate()`** - now uses `KFold` + `EnsembleModel` instead of standalone `RandomForestClassifier`
+- **Fixed `tune_hyperparameters()`** - now runs per-model `GridSearchCV` for RF, GB, and LR
+- **Fixed `agent_features.py`** - `all(any(...))` was passing a `bool` to `all()`, silently dropping 12 agent features
+- **Unified risk-scoring paths** - `RiskAnalyzer` now blends heuristic (70%) + ML (30%) scores
+
+### Added
+- Synthetic data templates for all 9 scanner domains (previously only MCP, AWS, LangChain)
+- 29 new ML pipeline tests
+
+### Removed
+- Unimplemented retraining strategies (`TRANSFER_LEARNING`, `FEEDBACK_LOOP`, `ACTIVE_LEARNING`) and 8 false preset configurations
+- Stale 16MB `mcp_risk_model_latest.pkl` artifact
+
+### Changed
+
+#### Project Metadata
+- Fixed version inconsistency: `pyproject.toml` now matches `__init__.py` at `1.2.0`
+- Fixed license: unified to MIT across `pyproject.toml`, README, and classifiers
+- Fixed repository URLs: now correctly point to `github.com/IParikh1/secureagent`
+- Added `.gitignore` (was missing entirely)
+- Removed committed `.DS_Store` files
+- Added GitHub topics for discoverability: security, ai-security, mcp, langchain, openai, cloud-security, vulnerability-scanner, devsecops, terraform, aws, azure
+
 ## [1.1.0] - 2026-01-16
 
 ### Added
@@ -104,6 +135,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/IParikh1/secureagent/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/IParikh1/secureagent/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/IParikh1/secureagent/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/IParikh1/secureagent/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/IParikh1/secureagent/releases/tag/v1.0.2
