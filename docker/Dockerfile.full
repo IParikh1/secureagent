@@ -1,7 +1,7 @@
 # SecureAgent - Full Installation with all optional dependencies
 # Use this for complete functionality including ML, cloud scanning, and integrations
 
-FROM python:3.11-slim as builder
+FROM python:3.14-slim as builder
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir poetry && \
     poetry config virtualenvs.create false && \
     poetry build -f wheel
 
-FROM python:3.11-slim as runtime
+FROM python:3.14-slim as runtime
 
 LABEL maintainer="SecureAgent Team"
 LABEL description="AI & Cloud Security Platform - Full Installation"
